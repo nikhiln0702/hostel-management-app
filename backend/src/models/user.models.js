@@ -27,7 +27,7 @@ const User = sequelize.define("User", {
     },
     refreshToken: {
         type: DataTypes.STRING,
-        allowNull: true, // This will store the token for refresh mechanism
+        allowNull: true, 
     }
 },
     {
@@ -40,6 +40,7 @@ const User = sequelize.define("User", {
 
 
 )
+// Function to match password
 User.prototype.isValidPassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
@@ -48,7 +49,7 @@ User.prototype.isValidPassword = async function (password) {
 
 
 
-
+// Function to Generate Access Token
 User.prototype.generateAccessToken = function () {
     try {
         return jwt.sign(
@@ -60,7 +61,7 @@ User.prototype.generateAccessToken = function () {
         throw Error(error)
     }
 }
-
+// Function to Generate Access Token
 User.prototype.generateRefreshToken = function () {
     try {
         return jwt.sign(

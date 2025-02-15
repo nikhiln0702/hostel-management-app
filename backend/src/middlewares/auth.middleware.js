@@ -6,13 +6,12 @@ import { User } from "../models/user.models.js";
 
 export const verifyJWT=asyncHandler(async(req,res,next)=>{
     try{
-        console.log("1")
+        // Get token from the header file
         const token=req.header("Authorization")?.replace("Bearer ","");
-        console.log("2")
         if(!token){
             return next(new ApiError(401,"Access Denied"));
         }
-        console.log("verifyying....")
+        //Verify the token
         let decoded;
         try {
             decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -21,8 +20,8 @@ export const verifyJWT=asyncHandler(async(req,res,next)=>{
             console.log("JWT verification error:", err);
             throw new ApiError(401, "Invalid or Expired Token");
         }
-        console.log("Decoded Email:", decoded.email);
 
+        // Find User with the refresh token
         const user=await User.findOne({where:{email:decoded.email}})
         if (user.refreshToken === null) {
             throw new ApiError(401, "Refresh token no longer valid. Please log in again.");
@@ -33,6 +32,8 @@ export const verifyJWT=asyncHandler(async(req,res,next)=>{
         if(!user){
             throw new ApiError(401,"Invalid Access Token")
         }
+        
+        // Store the Refresh values
         req.user=user;
 
         next();

@@ -16,6 +16,7 @@ connectDB()
 .catch((error)=>{
     console.log("DB connection failed.....")
 })
+//Sync the db
 try 
 {
     syncDB()

@@ -106,12 +106,13 @@ const loginWarden=asyncHandler(async (req, res, next) => {
 const logout=asyncHandler(async(req,res)=>{
     try 
     {
+        // Get the User from verifyJWT
         const user=req.user
         if(!user){
             throw(new ApiError(404,"User not found"))
         }
+        // Set User's refresh token to null and save to db
         user.refreshToken=null
-        console.log("3")
         await user.save()
     
         return res.status(200)
