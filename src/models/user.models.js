@@ -27,7 +27,15 @@ const User = sequelize.define("User", {
     },
     refreshToken: {
         type: DataTypes.STRING,
-        allowNull: true, // This will store the token for refresh mechanism
+        allowNull: true, 
+    },
+    otp: {
+        type: DataTypes.STRING, //not created
+        allowNull: true
+    },
+    otpExpires: {
+        type: DataTypes.DATE,//not created
+        allowNull: true
     }
 },
     {

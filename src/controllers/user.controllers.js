@@ -105,14 +105,14 @@ const loginWarden=asyncHandler(async (req, res, next) => {
 })
 
 //Logout
-const logout=asyncHandler(async(req,res)=>{
+const logout=asyncHandler(async(req,res,next)=>{
     try 
     {
         // Get the User from verifyJWT
         const user=req.user
         if(!user)
         {
-            throw(new ApiError(404,"User not found"))
+            return next(new ApiError(404,"User not found"))
         }
         // Set User's refresh token to null and save to db
         user.refreshToken=null
@@ -129,7 +129,7 @@ const logout=asyncHandler(async(req,res)=>{
 })
 
 //Change Password
-const changePassword=asyncHandler(async(req,res)=>{
+const changePassword=asyncHandler(async(req,res,next)=>{
     
     const {oldPassword,newPassword}=req.body
     const userID=req.user.id
@@ -138,13 +138,13 @@ const changePassword=asyncHandler(async(req,res)=>{
 
     if(!user)
     {
-        throw(new ApiError(404,"User Not Found"))
+        return next( new ApiError(404,"User Not Found"))
     }
     const isValidPassword=await user.isValidPassword(oldPassword)
 
     if(!isValidPassword)
     {
-        throw(new ApiError(400,"Incorrect Password"))
+        return next( new ApiError(400,"Incorrect Password"))
     }
 
     const hashedPassword=await bcrypt.hash(newPassword,10)
@@ -169,5 +169,37 @@ const changePassword=asyncHandler(async(req,res)=>{
 
 })
 
+//Forgot Password
+const forgotPassword=asyncHandler(async(req,res,next)=>{
+    const email=req.body
+    const user=await User.findOne({where:{email}})
+    if(!user)
+    {
+        return next(new ApiError(404),"User Not Found")
+    }
+    req.user=user
 
-export { loginStudent ,loginWarden ,logout ,changePassword};
+    //Generate OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save OTP to DB
+    await user.update({ otp, otpExpires });
+
+    try 
+    {
+        // Send OTP via email
+        await sendEmail(email, "Password Reset OTP", `Your OTP is: ${otp}`);
+    } 
+    catch (error) 
+    {
+        return next(new ApiError(500, "Error sending OTP email"));  // Error handling for email sending
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,"OTP sent to your email"))
+
+})
+
+
+export { loginStudent ,loginWarden ,logout ,changePassword ,forgotPassword};

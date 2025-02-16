@@ -23,15 +23,23 @@ export const verifyJWT=asyncHandler(async(req,res,next)=>{
         }
         console.log("Decoded Email:", decoded.email);
 
-        const user=await User.findOne({where:{email:decoded.email}})
+        let user;
+        try 
+        {
+            user=await User.findOne({where:{email:decoded.email}})
+        } 
+        catch (error) 
+        {
+            throw new ApiError(401,"Refresh token no longer valid. Please log in again.")
+        }
         if (user.refreshToken === null) {
-            throw new ApiError(401, "Refresh token no longer valid. Please log in again.");
+            return next( new ApiError(401, "Refresh token no longer valid. Please log in again."));
         }
 
         
 
         if(!user){
-            throw new ApiError(401,"Invalid Access Token")
+            return next (new ApiError(401,"Invalid Access Token"))
         }
         req.user=user;
 
