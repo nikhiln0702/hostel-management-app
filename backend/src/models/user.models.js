@@ -62,19 +62,19 @@ User.prototype.generateAccessToken = function () {
         return jwt.sign(
             { email: this.email },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "1h" }
+            { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "30m" }
         )
     } catch (error) {
         throw Error(error)
     }
 }
 
-User.prototype.generateRefreshToken = function () {
+User.prototype.generateRefreshToken = function (rememberMe) {
     try {
         return jwt.sign(
             { email: this.email},
-            process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
+            process.env.REFRESH_TOKEN_SECRET,
+            { expiresIn: rememberMe ? "7d" : "1d" }
         )
     } catch (error) {
         throw Error(error)

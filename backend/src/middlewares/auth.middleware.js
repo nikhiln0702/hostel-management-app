@@ -6,22 +6,18 @@ import { User } from "../models/user.models.js";
 
 export const verifyJWT=asyncHandler(async(req,res,next)=>{
     try{
-        console.log("1")
-        const token=req.header("Authorization")?.replace("Bearer ","");
-        console.log("2")
+        const {token}=req.body;
         if(!token){
             return next(new ApiError(401,"Access Denied"));
         }
-        console.log("verifyying....")
         let decoded;
         try {
             decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
             console.log("Token verified", decoded);
         } catch (err) {
             console.log("JWT verification error:", err);
-            throw new ApiError(401, "Invalid or Expired Token");
+            return next(new ApiError(401, "Invalid or Expired Token"));
         }
-        console.log("Decoded Email:", decoded.email);
 
         let user;
         try 
