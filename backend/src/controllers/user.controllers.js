@@ -132,6 +132,10 @@ const logout=asyncHandler(async(req,res,next)=>{
 const changePassword=asyncHandler(async(req,res,next)=>{
     
     const {oldPassword,newPassword}=req.body
+    if(!oldPassword||!newPassword)
+    {
+        return next(new ApiError(400,"Both fields are required"))
+    }
     const userID=req.user.id
 
     const user=await User.findByPk(userID)
@@ -171,11 +175,15 @@ const changePassword=asyncHandler(async(req,res,next)=>{
 
 //Forgot Password
 const forgotPassword=asyncHandler(async(req,res,next)=>{
-    const email=req.body
+    const {email}=req.body
+    if(!email)
+    {
+        return next(new ApiError(400,"Email is required"))
+    }
     const user=await User.findOne({where:{email}})
     if(!user)
     {
-        return next(new ApiError(404),"User Not Found")
+        return next(new ApiError(404,"User Not Found"))
     }
     req.user=user
 
@@ -201,5 +209,44 @@ const forgotPassword=asyncHandler(async(req,res,next)=>{
 
 })
 
+//reset password
+const resetPassword=asyncHandler(async(req,res,next)=>{
+    const {newPassword}=req.body
+    if(!newPassword)
+    {
+        return next(new ApiError(400,"Password field empty"))
+    }
+    const user=req.user
+    if(!user)
+    {
+        return next(new ApiError(404,"User not found"))
+    }
 
-export { loginStudent ,loginWarden ,logout ,changePassword ,forgotPassword};
+    const hashedPassword=await bcrypt.hash(newPassword,10)
+
+    user.password=hashedPassword
+    await user.save()
+
+    //To be Tested
+    const text= `
+    <h3>Hello ${user.username},</h3>
+    <p>Your password has been reset.</p>
+    <p>If this wasn't you, please contact support immediately.</p>
+    <br>
+    <p>Regards,<br>Hostel Management Team</p>
+`
+    try 
+    {
+        await sendEmail(user.email,"Password Reset",text)
+    } 
+    catch (error) 
+    {
+        return next(new ApiError(500,"Email was not send"))
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,"Password Reset"))
+})
+
+
+export { loginStudent ,loginWarden ,logout ,changePassword ,forgotPassword ,resetPassword};

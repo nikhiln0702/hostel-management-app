@@ -12,7 +12,7 @@ export const sendEmail = async (email,subject,text) => {
     try {
         const mailOptions = {
             from: `"Hostel Management" <${process.env.EMAIL_USER}>`,
-            to,
+            to:email,
             subject,
             text,
         };
