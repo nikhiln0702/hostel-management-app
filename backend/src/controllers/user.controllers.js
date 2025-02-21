@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/emailService.js";
 
 //testing 
@@ -25,12 +26,30 @@ const sampleUsers = [
     }
 ];
 
+// async function insertUsers() {
+//     try {
+//       // Loop through sampleUsers and hash passwords before creating them
+//       const usersWithHashedPasswords = await Promise.all(sampleUsers.map(async (user) => {
+//         const hashedPassword = await bcrypt.hash(user.password, 10);
+//         return { ...user, password: hashedPassword };
+//       }));
+  
+//       // Perform bulkCreate with validation enabled
+//       await User.bulkCreate(usersWithHashedPasswords, { validate: true });
+//       console.log('Users have been inserted successfully');
+//     } catch (error) {
+//       console.error('Error inserting users:', error);
+//     }
+//   }
+  
+  
+//   insertUsers();
 
 
 
 
 //Login a student
-const loginStudent = asyncHandler(async (req, res, next) => {
+export const loginStudent = asyncHandler(async (req, res, next) => {
     //Get email and password 
     const { email, password, rememberMe } = req.body;
 
@@ -57,7 +76,7 @@ const loginStudent = asyncHandler(async (req, res, next) => {
     //Generate token
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken(rememberMe);
-    user.refreshToken = refreshToken;
+    User.refreshToken = refreshToken;
 
     //Save Token to db
     await user.save();
@@ -66,7 +85,7 @@ const loginStudent = asyncHandler(async (req, res, next) => {
 })
 
 //Login a warden
-const loginWarden = asyncHandler(async (req, res, next) => {
+export const loginWarden = asyncHandler(async (req, res, next) => {
     //Get email and password 
     const { email, password } = req.body;
     User(email, password);
@@ -95,7 +114,7 @@ const loginWarden = asyncHandler(async (req, res, next) => {
     const refreshToken = user.generateRefreshToken();
 
     //Save token to db
-    user.refreshToken = refreshToken;
+    User.refreshToken = refreshToken;
 
     await user.save();
 
@@ -105,7 +124,7 @@ const loginWarden = asyncHandler(async (req, res, next) => {
 })
 
 //Logout
-const logout = asyncHandler(async (req, res, next) => {
+export const logout = asyncHandler(async (req, res, next) => {
     try {
         // Get the User from verifyJWT
         const user = req.user
@@ -126,7 +145,7 @@ const logout = asyncHandler(async (req, res, next) => {
 })
 
 //Change Password
-const changePassword = asyncHandler(async (req, res, next) => {
+export const changePassword = asyncHandler(async (req, res, next) => {
 
     const { oldPassword, newPassword } = req.body
     if (!oldPassword || !newPassword) {
@@ -150,15 +169,15 @@ const changePassword = asyncHandler(async (req, res, next) => {
     user.password = hashedPassword
     await user.save()
 
-    //To be Tested
-    const text = `
-    <h3>Hello ${user.username},</h3>
-    <p>Your password has been successfully changed.</p>
-    <p>If this wasn't you, please contact support immediately.</p>
-    <br>
-    <p>Regards,<br>Hostel Management Team</p>
-`
-    await sendEmail(user.email, "Password Changed", text)
+//     //To be Tested
+//     const text = `
+//     <h3>Hello ${user.username},</h3>
+//     <p>Your password has been successfully changed.</p>
+//     <p>If this wasn't you, please contact support immediately.</p>
+//     <br>
+//     <p>Regards,<br>Hostel Management Team</p>
+// `
+//     await sendEmail(user.email, "Password Changed", text)
 
 
     return res.status(200)
@@ -168,7 +187,7 @@ const changePassword = asyncHandler(async (req, res, next) => {
 })
 
 //Forgot Password
-const forgotPassword = asyncHandler(async (req, res, next) => {
+export const forgotPassword = asyncHandler(async (req, res, next) => {
     const { email } = req.body
     if (!email) {
         return next(new ApiError(400, "Email is required"))
@@ -186,13 +205,13 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
     // Save OTP to DB
     await user.update({ otp, otpExpires });
 
-    try {
-        // Send OTP via email
-        await sendEmail(email, "Password Reset OTP", `Your OTP is: ${otp}`);
-    }
-    catch (error) {
-        return next(new ApiError(500, "Error sending OTP email"));  // Error handling for email sending
-    }
+    // try {
+    //     // Send OTP via email
+    //     await sendEmail(email, "Password Reset OTP", `Your OTP is: ${otp}`);
+    // }
+    // catch (error) {
+    //     return next(new ApiError(500, "Error sending OTP email"));  // Error handling for email sending
+    // }
 
     return res.status(200)
         .json(new ApiResponse(200, "OTP sent to your email"))
@@ -200,7 +219,7 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
 })
 
 //reset password
-const resetPassword = asyncHandler(async (req, res, next) => {
+export const resetPassword = asyncHandler(async (req, res, next) => {
     const { newPassword } = req.body
     if (!newPassword) {
         return next(new ApiError(400, "Password field empty"))
@@ -215,27 +234,27 @@ const resetPassword = asyncHandler(async (req, res, next) => {
     user.password = hashedPassword
     await user.save()
 
-    //To be Tested
-    const text = `
-    <h3>Hello ${user.username},</h3>
-    <p>Your password has been reset.</p>
-    <p>If this wasn't you, please contact support immediately.</p>
-    <br>
-    <p>Regards,<br>Hostel Management Team</p>
-`
-    try {
-        await sendEmail(user.email, "Password Reset", text)
-    }
-    catch (error) {
-        return next(new ApiError(500, "Email was not send"))
-    }
+//     //To be Tested
+//     const text = `
+//     <h3>Hello ${user.username},</h3>
+//     <p>Your password has been reset.</p>
+//     <p>If this wasn't you, please contact support immediately.</p>
+//     <br>
+//     <p>Regards,<br>Hostel Management Team</p>
+// `
+//     try {
+//         await sendEmail(user.email, "Password Reset", text)
+//     }
+//     catch (error) {
+//         return next(new ApiError(500, "Email was not send"))
+//     }
 
     return res.status(200)
         .json(new ApiResponse(200, "Password Reset"))
 })
 
 //verify otp
-const verifyOTP=asyncHandler(async(req,res,next)=>{
+export const verifyOTP=asyncHandler(async(req,res,next)=>{
     const {otp}=req.body
     if(!otp)
     {
@@ -261,22 +280,24 @@ const verifyOTP=asyncHandler(async(req,res,next)=>{
 })
 
 //refesh Tokens
-const refreshToken = asyncHandler(async (req, res, next) => {
-    const { token } = req.body;
+export const refreshToken = asyncHandler(async (req, res, next) => {
+    const token = req.headers['authorization']?.split(' ')[1];
     if (!token) {
         return next(new ApiError(401, "Access Denied"));
     }
+    console.log('Token received:', token);
+
     let decoded;
     try 
     {
-        decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+        decoded = jwt.verify(token,process.env.REFRESH_TOKEN_SECRET);
         console.log("Token verified", decoded);
     } 
     catch (err) 
     {
-        return next(new ApiError(401, "Invalid or Expired Token"));
+        return next(new ApiError(401, err));
     }
-    const user=await user.findByPk(decoded.id)
+    const user=await User.findOne({where :{email :decoded.email}})
     if(!user)
     {
         return next(new ApiError(404,"User not found"))
@@ -288,4 +309,4 @@ const refreshToken = asyncHandler(async (req, res, next) => {
 
 })
 
-export { loginStudent, loginWarden, logout, changePassword, forgotPassword, resetPassword, verifyOTP , refreshToken };
+

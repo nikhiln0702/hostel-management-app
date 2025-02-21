@@ -6,7 +6,7 @@ import { User } from "../models/user.models.js";
 
 export const verifyJWT=asyncHandler(async(req,res,next)=>{
     try{
-        const {token}=req.body;
+        const token = req.headers['authorization']?.split(' ')[1];
         if(!token){
             return next(new ApiError(401,"Access Denied"));
         }
