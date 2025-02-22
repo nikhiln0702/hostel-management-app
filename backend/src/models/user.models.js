@@ -36,6 +36,10 @@ const User = sequelize.define("User", {
     otpExpires: {
         type: DataTypes.DATE,//not created
         allowNull: true
+    },
+    status: {
+        type: DataTypes.ENUM("Present", "Absent"),
+        defaultValue: "Present"
     }
 },
     {
@@ -60,7 +64,7 @@ User.prototype.isValidPassword = async function (password) {
 User.prototype.generateAccessToken = function () {
     try {
         return jwt.sign(
-            { email: this.email },
+            { email: this.email,id:this.id },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "30m" }
         )

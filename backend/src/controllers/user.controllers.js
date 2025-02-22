@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
+import { LeaveRegister } from "../models/leaveregister.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -339,4 +340,17 @@ export const refreshToken = asyncHandler(async (req, res, next) => {
 
 })
 
+export const leaveregister=asyncHandler(async(req,res,next)=>{
+    const {date,remarks}=req.body
+    if(!date||!remarks)
+    {
+        return next(new ApiError(400,"Fill all fields"))
+    }
+    if(!["Entry","Exit"].includes(remarks))
+    {
+        return next(new ApiError(400,))
+    }
+    id=req.user.id
 
+    await LeaveRegister.create({id,remarks,date})
+})
