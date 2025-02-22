@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/emailService.js";
+import crypto from "crypto";
 
 //testing 
 
@@ -33,7 +34,7 @@ const sampleUsers = [
 //         const hashedPassword = await bcrypt.hash(user.password, 10);
 //         return { ...user, password: hashedPassword };
 //       }));
-  
+
 //       // Perform bulkCreate with validation enabled
 //       await User.bulkCreate(usersWithHashedPasswords, { validate: true });
 //       console.log('Users have been inserted successfully');
@@ -41,8 +42,8 @@ const sampleUsers = [
 //       console.error('Error inserting users:', error);
 //     }
 //   }
-  
-  
+
+
 //   insertUsers();
 
 
@@ -169,15 +170,15 @@ export const changePassword = asyncHandler(async (req, res, next) => {
     user.password = hashedPassword
     await user.save()
 
-//     //To be Tested
-//     const text = `
-//     <h3>Hello ${user.username},</h3>
-//     <p>Your password has been successfully changed.</p>
-//     <p>If this wasn't you, please contact support immediately.</p>
-//     <br>
-//     <p>Regards,<br>Hostel Management Team</p>
-// `
-//     await sendEmail(user.email, "Password Changed", text)
+    //     //To be Tested
+    //     const text = `
+    //     <h3>Hello ${user.username},</h3>
+    //     <p>Your password has been successfully changed.</p>
+    //     <p>If this wasn't you, please contact support immediately.</p>
+    //     <br>
+    //     <p>Regards,<br>Hostel Management Team</p>
+    // `
+    //     await sendEmail(user.email, "Password Changed", text)
 
 
     return res.status(200)
@@ -196,11 +197,16 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     if (!user) {
         return next(new ApiError(404, "User Not Found"))
     }
-    req.user = user
+    const token = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
+
+    if (user.otp && new Date() < user.otpExpires) {
+        // OTP exists and hasn't expired
+        return res.status(200).json(new ApiResponse(200, "OTP already sent to your email",{token}));
+    }
 
     //Generate OTP
     const otp = crypto.randomInt(100000, 999999).toString();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000 + (5.5 * 60 * 60 * 1000));
 
     // Save OTP to DB
     await user.update({ otp, otpExpires });
@@ -212,9 +218,8 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     // catch (error) {
     //     return next(new ApiError(500, "Error sending OTP email"));  // Error handling for email sending
     // }
-
     return res.status(200)
-        .json(new ApiResponse(200, "OTP sent to your email"))
+        .json(new ApiResponse(200, "OTP sent to your email",{token}))
 
 })
 
@@ -224,7 +229,23 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
     if (!newPassword) {
         return next(new ApiError(400, "Password field empty"))
     }
-    const user = req.user
+
+    const token = req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+        return next(new ApiError(401, "Token required"));
+    }
+
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        console.log("Token verified", decoded);
+    } 
+    catch (err) {
+        console.log("JWT verification error:", err);
+        return next(new ApiError(401, "Invalid or Expired Token"));
+    }
+    const user = await User.findOne({ where: { id: decoded.id } });
     if (!user) {
         return next(new ApiError(404, "User not found"))
     }
@@ -234,49 +255,61 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
     user.password = hashedPassword
     await user.save()
 
-//     //To be Tested
-//     const text = `
-//     <h3>Hello ${user.username},</h3>
-//     <p>Your password has been reset.</p>
-//     <p>If this wasn't you, please contact support immediately.</p>
-//     <br>
-//     <p>Regards,<br>Hostel Management Team</p>
-// `
-//     try {
-//         await sendEmail(user.email, "Password Reset", text)
-//     }
-//     catch (error) {
-//         return next(new ApiError(500, "Email was not send"))
-//     }
-
+    //     //To be Tested
+    //     const text = `
+    //     <h3>Hello ${user.username},</h3>
+    //     <p>Your password has been reset.</p>
+    //     <p>If this wasn't you, please contact support immediately.</p>
+    //     <br>
+    //     <p>Regards,<br>Hostel Management Team</p>
+    // `
+    //     try {
+    //         await sendEmail(user.email, "Password Reset", text)
+    //     }
+    //     catch (error) {
+    //         return next(new ApiError(500, "Email was not send"))
+    //     }
     return res.status(200)
         .json(new ApiResponse(200, "Password Reset"))
 })
 
 //verify otp
-export const verifyOTP=asyncHandler(async(req,res,next)=>{
-    const {otp}=req.body
-    if(!otp)
-    {
-        return next(new ApiError(400,"OTP Field Empty"))
+export const verifyOTP = asyncHandler(async (req, res, next) => {
+    const { otp } = req.body
+    if (!otp) {
+        return next(new ApiError(400, "OTP Field Empty"))
     }
-    const user=req.user
+    const token = req.headers['authorization']?.split(' ')[1];
 
-    if(!user)
-    {
-        return next(new ApiError(404,"User Not Found"))
+    if (!token) {
+        return next(new ApiError(401, "Token required"));
     }
-    if(user.otp != otp || new Date() > user.otpExpires)
-    {
-        return next(new ApiError(400,"Invalid OTP"))
+
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        console.log("Token verified", decoded);
+    } 
+    catch (err) {
+        console.log("JWT verification error:", err);
+        return next(new ApiError(401, "Invalid or Expired Token"));
     }
-    
+    const user = await User.findOne({ where: { id: decoded.id } });
+    console.log(user)
+
+    if (!user) {
+        return next(new ApiError(404, "User Not Found"))
+    }
+    if (user.otp != otp || new Date() > user.otpExpires) {
+        return next(new ApiError(400, "Invalid OTP"))
+    }
+
 
     // OTP is valid, reset it
     await user.update({ otp: null, otpExpires: null });
 
     return res.status(200)
-    .json(new ApiResponse(200,"OTP Verified"))
+        .json(new ApiResponse(200, "OTP Verified"))
 })
 
 //refesh Tokens
@@ -288,24 +321,21 @@ export const refreshToken = asyncHandler(async (req, res, next) => {
     console.log('Token received:', token);
 
     let decoded;
-    try 
-    {
-        decoded = jwt.verify(token,process.env.REFRESH_TOKEN_SECRET);
+    try {
+        decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
         console.log("Token verified", decoded);
-    } 
-    catch (err) 
-    {
+    }
+    catch (err) {
         return next(new ApiError(401, err));
     }
-    const user=await User.findOne({where :{email :decoded.email}})
-    if(!user)
-    {
-        return next(new ApiError(404,"User not found"))
+    const user = await User.findOne({ where: { email: decoded.email } })
+    if (!user) {
+        return next(new ApiError(404, "User not found"))
     }
-    const accessToken=user.generateAccessToken()
+    const accessToken = user.generateAccessToken()
 
     return res.status(200)
-    .json(new ApiResponse(200,"token refreshed",{accessToken}))
+        .json(new ApiResponse(200, "token refreshed", { accessToken }))
 
 })
 

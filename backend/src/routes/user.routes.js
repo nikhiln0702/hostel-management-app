@@ -9,7 +9,7 @@ router.route("/loginstudent").post(loginStudent);
 router.route("/loginwarden").post(loginWarden);
 router.route("/forgotpassword").post(forgotPassword)
 router.route("/verifyotp").post(verifyOTP);
-router.route("resetpassword").post(resetPassword);
+router.route("/resetpassword").post(resetPassword);
 
 //Secured Routes
 router.route("/logout").post(verifyJWT,logout);
