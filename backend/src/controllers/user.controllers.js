@@ -59,7 +59,6 @@ export const loginStudent = asyncHandler(async (req, res, next) => {
     if (!email || !password) {
         return next(new ApiError(400, "Please provide email and password"));
     }
-
     //Finding the user using email
     const user = await User.findOne({ where: { email } });
 
@@ -78,7 +77,7 @@ export const loginStudent = asyncHandler(async (req, res, next) => {
     //Generate token
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken(rememberMe);
-    User.refreshToken = refreshToken;
+    user.refreshToken = refreshToken;
 
     //Save Token to db
     await user.save();
@@ -350,7 +349,19 @@ export const leaveregister=asyncHandler(async(req,res,next)=>{
     {
         return next(new ApiError(400,))
     }
-    id=req.user.id
+    const student_id=req.user.id
 
-    await LeaveRegister.create({id,remarks,date})
+    await LeaveRegister.create({student_id:student_id,remarks:remarks,date:date})
+
+    if(remarks==="Exit")
+    {
+        await User.update({status:"Absent"},{where:{id:student_id}})
+    }
+    else if(remarks==="Entry")
+    {
+        await User.update({status:"Present"},{where:{id:student_id}})
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,"Entered into register "))
 })

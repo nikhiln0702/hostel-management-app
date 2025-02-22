@@ -10,7 +10,7 @@ dotenv.config({
 connectDB()
 .then(()=>{
     app.listen(7000,()=>{
-        console.log('Server is running on port 8000');
+        console.log('Server is running on port 7000 and db is connected')
     })
     syncDB()
     console.log("DB synced")

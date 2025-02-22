@@ -30,11 +30,11 @@ const User = sequelize.define("User", {
         allowNull: true, 
     },
     otp: {
-        type: DataTypes.STRING, //not created
+        type: DataTypes.STRING, 
         allowNull: true
     },
     otpExpires: {
-        type: DataTypes.DATE,//not created
+        type: DataTypes.DATE,
         allowNull: true
     },
     status: {

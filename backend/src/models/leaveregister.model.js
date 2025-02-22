@@ -1,9 +1,15 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from '../db/db.js';
 
-const LeaveRegister = sequelize.define("EntryExitLog", {
+const LeaveRegister = sequelize.define("LeaveRegister", {
+    id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        primaryKey: true
+    },
     student_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false
     },
     remarks: {
@@ -15,8 +21,6 @@ const LeaveRegister = sequelize.define("EntryExitLog", {
         allowNull: false
     }
    
-}, {
-    timestamps: true  // Includes 'createdAt' and 'updatedAt'
 });
 
 export {LeaveRegister}

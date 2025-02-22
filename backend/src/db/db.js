@@ -8,7 +8,8 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     host: process.env.DB_HOST,
     port:3306,
     dialect: "mysql",
-    logging: false
+    logging :false // Logs SQL queries to the console
+
 });
 
 const connectDB= async()=>{
@@ -27,7 +28,7 @@ const connectDB= async()=>{
 const syncDB=async()=>{
     try 
     {
-        await sequelize.sync({force:false})
+        await sequelize.sync({alter:true})
     } 
     catch (error) 
     {
