@@ -1,5 +1,5 @@
 import { Router} from "express";
-import { loginStudent ,loginWarden ,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister} from "../controllers/user.controllers.js";
+import { loginStudent ,loginWarden ,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister,viewAbsentStudents} from "../controllers/user.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { changePasswordLimiter } from "../middlewares/ratelimiter.middleware.js";
 
@@ -16,6 +16,7 @@ router.route("/logout").post(verifyJWT,logout);
 router.route("/changepassword").post(verifyJWT,changePasswordLimiter,changePassword);
 router.route("/refreshtoken").post(refreshToken)
 router.route("/leaveregister").post(verifyJWT,leaveregister)
+router.route("/viewabsentstudents").get(verifyJWT,viewAbsentStudents)
 
 
 

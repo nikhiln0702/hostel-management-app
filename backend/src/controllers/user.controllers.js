@@ -347,7 +347,7 @@ export const leaveregister=asyncHandler(async(req,res,next)=>{
     }
     if(!["Entry","Exit"].includes(remarks))
     {
-        return next(new ApiError(400,))
+        return next(new ApiError(400,"Invalid Remarks"))
     }
     const student_id=req.user.id
 
@@ -364,4 +364,10 @@ export const leaveregister=asyncHandler(async(req,res,next)=>{
 
     return res.status(200)
     .json(new ApiResponse(200,"Entered into register "))
+})
+
+export const viewAbsentStudents=asyncHandler(async(req,res,next)=>{
+    const students=await User.findAll({where:{status:"Absent"},attributes:['username','email']})
+    return res.status(200)
+    .json(students)
 })
