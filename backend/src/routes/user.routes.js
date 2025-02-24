@@ -1,12 +1,13 @@
 import { Router} from "express";
-import { loginStudent ,loginWarden ,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister,viewAbsentStudents} from "../controllers/user.controllers.js";
+import { loginStudent ,loginWarden ,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister,viewAbsentStudents ,updateRole} from "../controllers/user.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyRole } from "../middlewares/authrole.middleware.js";
 import { changePasswordLimiter } from "../middlewares/ratelimiter.middleware.js";
 
 const router = Router();
 
-router.route("/loginstudent").post(loginStudent);
-router.route("/loginwarden").post(loginWarden);
+router.route("/loginstudent").post(loginStudent,verifyRole(["Student","Admin"]));
+router.route("/loginwarden").post(loginWarden,verifyRole(["Warden","Admin"]));
 router.route("/forgotpassword").post(forgotPassword)
 router.route("/verifyotp").post(verifyOTP);
 router.route("/resetpassword").post(resetPassword);
@@ -15,8 +16,9 @@ router.route("/resetpassword").post(resetPassword);
 router.route("/logout").post(verifyJWT,logout);
 router.route("/changepassword").post(verifyJWT,changePasswordLimiter,changePassword);
 router.route("/refreshtoken").post(refreshToken)
-router.route("/leaveregister").post(verifyJWT,leaveregister)
-router.route("/viewabsentstudents").get(verifyJWT,viewAbsentStudents)
+router.route("/leaveregister").post(verifyJWT,verifyRole(["Student","Admin"]),leaveregister)
+router.route("/viewabsentstudents").get(verifyJWT,verifyRole(["Warden","Admin"]),viewAbsentStudents)
+router.route("/updaterole").post(verifyJWT,verifyRole(["Admin"]),updateRole)
 
 
 

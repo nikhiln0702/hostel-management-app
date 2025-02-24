@@ -48,7 +48,11 @@ const User = sequelize.define("User", {
     totalAbsentDays: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-    }
+    },
+    role: {
+        type: DataTypes.ENUM("Student", "Warden","Admin"),
+        defaultValue: "Student"
+    },
 
 },
     {

@@ -14,7 +14,7 @@ const sampleUsers = [
     {
         username: "john_doe",
         email: "john.doe@example.com",
-        password: "password123"
+        password: "password12345"
     },
     {
         username: "jane_smith",
@@ -373,4 +373,27 @@ export const viewAbsentStudents=asyncHandler(async(req,res,next)=>{
     const students=await User.findAll({where:{status:"Absent"},attributes:['username','email']})
     return res.status(200)
     .json(students)
+})
+
+export const updateRole=asyncHandler(async(req,res,next)=>{
+    const {email,role}=req.body
+
+    if(!email||!role)
+    {
+        return next(new ApiError(400,"Fill All Fields"))
+    }
+    const roles=["Student","Admin","Warden"]
+    if(!roles.includes(role))
+    {
+        return next(new ApiError(400,"Invalid Role"))
+    }
+    const user=await User.findOne({where:{email}})
+    if(!user)
+    {
+        return next(new ApiError(404,"User Not Found"))
+    }
+    user.role=role
+    await user.save()
+    return res.status(200)
+    .json(new ApiResponse(200,"Role Updated"))
 })

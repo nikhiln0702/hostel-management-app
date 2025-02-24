@@ -2,8 +2,8 @@ import cron from "node-cron";
 import { Op } from "sequelize";
 import { User } from "../src/models/user.models.js";
 
-
-cron.schedule("* * * * *", async () => {
+//  Runs every minute for testing
+cron.schedule("0 0 * * *", async () => {
     console.log("Running daily absence check...");
   
     try {
