@@ -351,15 +351,18 @@ export const leaveregister=asyncHandler(async(req,res,next)=>{
     }
     const student_id=req.user.id
 
-    await LeaveRegister.create({student_id:student_id,remarks:remarks,date:date})
 
     if(remarks==="Exit")
     {
+        await LeaveRegister.create({student_id:student_id,remarks:remarks,date:date})
         await User.update({status:"Absent"},{where:{id:student_id}})
     }
     else if(remarks==="Entry")
     {
-        await User.update({status:"Present"},{where:{id:student_id}})
+        
+        
+        await LeaveRegister.create({student_id:student_id,remarks:remarks,date:date,})
+        await User.update({status:"Present",totalAbsentDays:0},{where:{id:student_id}})
     }
 
     return res.status(200)

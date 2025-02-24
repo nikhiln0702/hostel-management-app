@@ -19,7 +19,7 @@ const LeaveRegister = sequelize.define("LeaveRegister", {
     date: {
         type: DataTypes.DATEONLY,  // Storing only the date (no time)
         allowNull: false
-    }
+    },
    
 });
 

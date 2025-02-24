@@ -40,7 +40,16 @@ const User = sequelize.define("User", {
     status: {
         type: DataTypes.ENUM("Present", "Absent"),
         defaultValue: "Present"
+    },
+    totalPresentDays: {
+         type: DataTypes.INTEGER, 
+         defaultValue: 30 
+    },
+    totalAbsentDays: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     }
+
 },
     {
         hooks: {

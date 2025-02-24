@@ -1,6 +1,8 @@
 import {app} from './app.js';
 import dotenv from 'dotenv';
 import { connectDB, syncDB } from './db/db.js';
+import "../scripts/cronJobs.js";
+
 
 dotenv.config({
     path: './env'
