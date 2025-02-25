@@ -359,7 +359,11 @@ export const leaveregister=asyncHandler(async(req,res,next)=>{
     }
     else if(remarks==="Entry")
     {
-        
+        const lastExit=await LeaveRegister.findOne({where:{student_id},order: [['date', 'DESC']]})
+        if(lastExit.remarks=="Entry")
+        {
+            return next(new ApiError(404,"No Exit Record Found"))
+        }
         
         await LeaveRegister.create({student_id:student_id,remarks:remarks,date:date,})
         await User.update({status:"Present",totalAbsentDays:0},{where:{id:student_id}})

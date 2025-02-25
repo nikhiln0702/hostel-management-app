@@ -28,7 +28,7 @@ const connectDB= async()=>{
 const syncDB=async()=>{
     try 
     {
-        await sequelize.sync({alter:true})
+        await sequelize.sync({alter:false})
     } 
     catch (error) 
     {
