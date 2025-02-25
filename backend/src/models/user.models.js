@@ -53,6 +53,14 @@ const User = sequelize.define("User", {
         type: DataTypes.ENUM("Student", "Warden","Admin"),
         defaultValue: "Student"
     },
+    block: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    managedBlock: {
+        type: DataTypes.STRING,
+        allowNull: true // Null if not a warden
+    }
 
 },
     {

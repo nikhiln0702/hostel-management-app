@@ -374,7 +374,8 @@ export const leaveregister=asyncHandler(async(req,res,next)=>{
 })
 
 export const viewAbsentStudents=asyncHandler(async(req,res,next)=>{
-    const students=await User.findAll({where:{status:"Absent"},attributes:['username','email']})
+    const user=await User.findByPk(req.user.id)
+    const students=await User.findAll({where:{status:"Absent",block:user.managedBlock},attributes:['username','email']})
     return res.status(200)
     .json(students)
 })
