@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from '../db/db.js';
+import { User } from "./user.models.js";
 
 const LeaveRegister = sequelize.define("LeaveRegister", {
     id: {
@@ -10,7 +11,11 @@ const LeaveRegister = sequelize.define("LeaveRegister", {
     },
     student_id: {
         type: DataTypes.UUID,
-        allowNull: false
+        allowNull: false,
+        references: {
+            model: User,
+            key: "id",
+          },
     },
     remarks: {
         type: DataTypes.ENUM("Entry", "Exit"),
@@ -22,5 +27,7 @@ const LeaveRegister = sequelize.define("LeaveRegister", {
     },
    
 });
+
+LeaveRegister.belongsTo(User, { foreignKey: "student_id" });
 
 export {LeaveRegister}

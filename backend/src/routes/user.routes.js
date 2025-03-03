@@ -1,8 +1,9 @@
 import { Router} from "express";
-import { loginStudent ,loginWarden ,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister,viewAbsentStudents ,updateRole} from "../controllers/user.controllers.js";
+import { loginStudent ,loginWarden ,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister,viewAbsentStudents ,updateRole,addComplaint,getComplaints,updateComplaintStatus} from "../controllers/user.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { verifyRole } from "../middlewares/authrole.middleware.js";
 import { changePasswordLimiter } from "../middlewares/ratelimiter.middleware.js";
+
 
 const router = Router();
 
@@ -19,6 +20,9 @@ router.route("/refreshtoken").post(refreshToken)
 router.route("/leaveregister").post(verifyJWT,verifyRole(["Student","Admin"]),leaveregister)
 router.route("/viewabsentstudents").get(verifyJWT,verifyRole(["Warden","Admin"]),viewAbsentStudents)
 router.route("/updaterole").post(verifyJWT,verifyRole(["Admin"]),updateRole)
+router.route("/addcomplaint").post(verifyJWT,verifyRole(["Student","Admin"]),addComplaint)
+router.route("/viewcomplaints").get(verifyJWT,verifyRole(["Warden","Admin"]),getComplaints)
+router.route("/updatecomplaintstatus").post(verifyJWT,verifyRole(["Warden","Admin"]),updateComplaintStatus)
 
 
 

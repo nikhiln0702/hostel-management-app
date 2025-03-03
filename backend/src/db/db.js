@@ -26,15 +26,13 @@ const connectDB= async()=>{
 }
 
 const syncDB=async()=>{
-    try 
-    {
-        await sequelize.sync({alter:false})
-    } 
-    catch (error) 
-    {
-        console.log("Database sync failed",error)
-        process.exit(1)
-    }
+    console.log("Registered models:", sequelize.models);
+
+    await sequelize.sync({ alter:false }).then(() => {
+        console.log("Table sync complete");
+    }).catch(err => {
+        console.error("Error syncing table:", err);
+    });
 }
 
 

@@ -1,7 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
-import { LeaveRegister } from "../models/leaveregister.model.js";
+import { LeaveRegister } from "../models/leaveregister.models.js";
+import { Complaint } from "../models/complaints.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -126,7 +127,7 @@ export const loginWarden = asyncHandler(async (req, res, next) => {
 
 //Logout
 export const logout = asyncHandler(async (req, res, next) => {
-    try {
+    
         // Get the User from verifyJWT
         const user = req.user
         if (!user) {
@@ -138,11 +139,7 @@ export const logout = asyncHandler(async (req, res, next) => {
 
         return res.status(200)
             .json(new ApiResponse(200, "Logout Successfull"))
-    }
-    catch (error) {
-        return res.status(500)
-            .json(new ApiResponse(500, "Logout Failed"))
-    }
+    
 })
 
 //Change Password
@@ -401,4 +398,44 @@ export const updateRole=asyncHandler(async(req,res,next)=>{
     await user.save()
     return res.status(200)
     .json(new ApiResponse(200,"Role Updated"))
+})
+
+export const addComplaint=asyncHandler(async(req,res,next)=>{
+    const {category,description}=req.body
+    const student_id=req.user.id
+
+    if(!category||!description)
+    {
+        return next(new ApiError(400,"All Fields Are Required"))
+    }
+
+    const complaint=await Complaint.create({student_id,category,description})
+
+    return res.status(201)
+    .json(new ApiResponse(201,"Complaint Filed"))
+})
+
+export const getComplaints=asyncHandler(async(req,res,next)=>{
+    const complaints=await Complaint.findAll()
+    return res.status(200)
+    .json(new ApiResponse(200,"Complaints Fetched",complaints))
+})
+
+export const updateComplaintStatus=asyncHandler(async(req,res,next)=>{
+    const {id,status}=req.body
+
+    if (!["Pending", "In Progress", "Resolved"].includes(status)) {
+        return next(new ApiError(400, "Invalid status value"));
+    }
+
+    const complaint = await Complaint.findByPk(id);
+    if (!complaint) {
+        return next(new ApiError(404, "Complaint not found"));
+    }
+
+    complaint.status = status;
+    await complaint.save();
+
+    return res.status(200)
+    .json(new ApiResponse(200, "Complaint status updated",complaint))
 })
