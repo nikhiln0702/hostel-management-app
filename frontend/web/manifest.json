@@ -1,6 +1,6 @@
 {
-    "name": "hostel_management",
-    "short_name": "hostel_management",
+    "name": "hostel_management_system",
+    "short_name": "hostel_management_system",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
