@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,30 +16,39 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool rememberMe = false;
+  bool rememberMe=false;
 
   // Function to send login request to Node.js backend
-  Future<void> login(String email, String password) async {
-    final url = Uri.parse(
-      'http://10.0.2.2:3000/login',
-    ); // Use for Android Emulator
-
+ Future<void> login(String email, String password) async {
+    final url = Uri.parse('http://localhost:7000/api/v1/loginstudent');
+  bool rememberMe=false;
     try {
+      if (email.isEmpty || password.isEmpty) {
+        showErrorDialog(context, "Email and password are required.");
+        return;
+      }
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
           'password': password,
-          'rememberMe': false,
+          'rememberMe': rememberMe,
         }),
       );
 
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
         String accessToken = responseBody['data']['accessToken'];
+        String refreshToken = responseBody['data']['refreshToken'];
 
-        // Navigate to student dashboard if login is successful
+        // Store the tokens in SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('accessToken', accessToken);
+        await prefs.setString('refreshToken', refreshToken);  
+  // Print the access token to the console
+        // Navigate to the student dashboard after login
         Navigator.pushReplacementNamed(context, '/student_dashboard');
       } else {
         final errorMessage = json.decode(response.body)['message'];

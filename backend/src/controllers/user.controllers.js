@@ -68,11 +68,13 @@ export const loginStudent = asyncHandler(async (req, res, next) => {
 
     //Invalid credentials
     if (!user) {
-        return next(new ApiError(401, "Invalid credentials"));
+        return res.status(400)
+        .json(new ApiResponse(400, "User not found"))
     }
 
     if (!(await user.isValidPassword(password))) {
-        return next(new ApiError(401, "Invalid credentials"));
+        return res.status(400)
+        .json(new ApiResponse(401, "Invalid credentials"));
     }
 
     //Generate token
@@ -83,7 +85,7 @@ export const loginStudent = asyncHandler(async (req, res, next) => {
     //Save Token to db
     await user.save();
     return res.status(200)
-        .json(new ApiResponse(200, "Student logged in successfully", { email, password, accessToken, refreshToken }));
+        .json(new ApiResponse(200, "Student logged in successfully", { email, password, accessToken, refreshToken,rememberMe}));
 })
 
 //Login a warden
