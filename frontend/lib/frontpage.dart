@@ -21,7 +21,7 @@ class FrontPage extends StatelessWidget {
               // Warden Login Button
               _buildLoginButton(
                 "Warden Login",
-                () => Navigator.pushNamed(context, '/warden_login'),
+                () => Navigator.pushNamed(context, '/wardenLogin'),
               ),
               SizedBox(height: 20),
 

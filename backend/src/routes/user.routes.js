@@ -18,7 +18,7 @@ router.route("/logout").post(verifyJWT,logout);
 router.route("/changepassword").post(verifyJWT,changePasswordLimiter,changePassword);
 router.route("/refreshtoken").post(refreshToken)
 router.route("/leaveregister").post(verifyJWT,verifyRole(["Student","Admin"]),leaveregister)
-router.route("/viewabsentstudents").get(verifyJWT,verifyRole(["Warden","Admin"]),viewAbsentStudents)
+router.route("/viewstudents").get(verifyJWT,verifyRole(["Warden","Admin"]),viewAbsentStudents)
 router.route("/updaterole").post(verifyJWT,verifyRole(["Admin"]),updateRole)
 router.route("/addcomplaint").post(verifyJWT,verifyRole(["Student","Admin"]),addComplaint)
 router.route("/viewcomplaints").get(verifyJWT,verifyRole(["Warden","Admin"]),getComplaints)
