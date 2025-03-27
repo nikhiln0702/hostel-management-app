@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class WardenFeesScreen extends StatefulWidget {
   @override
@@ -57,27 +59,63 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
   }
 
   Future<void> saveChanges() async {
-    if (selectedMonth == null || selectedYear == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Please select month and year!"),
-        backgroundColor: Colors.red,
-      ));
-      return;
-    }
+  if (selectedMonth == null || selectedYear == null || mpd == null || ksw == null || elec == null) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text("Please fill all fields!"),
+      backgroundColor: Colors.red,
+    ));
+    return;
+  }
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String keyPrefix = "${selectedMonth}_$selectedYear";
+  // Construct the request body for the API
+  final requestBody = {
+    'month': selectedMonth,
+    'year': selectedYear,
+    'mpd_rate': mpd ?? 0.0,
+    'ksw_charges': ksw ?? 0.0,
+    'electricity_charges': elec ?? 0.0,
+    'est': est ?? 0.0,
+    'month_number': months.indexOf(selectedMonth!) + 1,  // Month number (1 for January, 2 for February, etc.)
+  };
+  
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? accessToken = prefs.getString('accessToken');
+  
+  if (accessToken == null) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text("No access token found! Please log in again."),
+      backgroundColor: Colors.red,
+    ));
+    return;
+  }
 
-    await prefs.setDouble("${keyPrefix}_mpd", mpd ?? 0.0);
-    await prefs.setDouble("${keyPrefix}_ksw", ksw ?? 0.0);
-    await prefs.setDouble("${keyPrefix}_est", est ?? 0.0);
-    await prefs.setDouble("${keyPrefix}_elec", elec ?? 0.0);
+  // Send data to backend API
+  final response = await http.post(
+    Uri.parse('http://localhost:7000/api/v1/publishmessbill'),  // Replace with your API endpoint
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    },
+    body: json.encode(requestBody),
+  );
 
+  // Debugging: Print the response status code and body
+  print('Response Status: ${response.statusCode}');
+  print('Response Body: ${response.body}');
+
+  if (response.statusCode == 201) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text("Data saved successfully for $selectedMonth $selectedYear!"),
       backgroundColor: Colors.green,
     ));
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text("Error saving data! Please try again."),
+      backgroundColor: Colors.red,
+    ));
   }
+}
+
 
   Future<void> loadPreviousData() async {
     if (selectedMonth == null || selectedYear == null) return;

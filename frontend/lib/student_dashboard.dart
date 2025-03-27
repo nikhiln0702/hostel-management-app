@@ -1,32 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'student_leave_register.dart'; // ✅ Import Leave Register Page
+import 'student_mess_bill.dart'; // ✅ Import Mess Bill Page
+import 'student_transaction.dart'; // ✅ Import Transactions Page
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: StudentDashboard(),
-    );
-  }
-}
-
-class StudentDashboard extends StatelessWidget {
+class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    String todayDate = DateFormat('EEEE, MMM d, y').format(DateTime.now());
+  _StudentDashboardState createState() => _StudentDashboardState();
+}
 
+class _StudentDashboardState extends State<StudentDashboard> {
+  String username = ""; // Variable to store the logged-in user's name
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName(); // Load the username when the screen is loaded
+  }
+
+  // Function to retrieve the user's name from SharedPreferences
+  Future<void> _loadUserName() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      username = prefs.getString('username') ?? "Admin"; // Default to "Admin" if not found
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue, // 🔹 Set to match bottom AppBar
+        backgroundColor: Colors.blue,
         elevation: 0,
         title: Text(
           'Student Dashboard',
@@ -36,37 +42,32 @@ class StudentDashboard extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        centerTitle: true, // 🔹 Ensures it's centered
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.notifications,
-              color: Colors.white,
-            ), // 🔹 Moved to top-right
+            icon: Icon(Icons.notifications, color: Colors.white),
             onPressed: () {},
           ),
         ],
-        automaticallyImplyLeading: false, // 🔹 Removes the back button
       ),
+
       bottomNavigationBar: BottomAppBar(
         color: Colors.blue,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
-              icon: Icon(
-                Icons.home,
-                color: Colors.white,
-                size: 32,
-              ), // 🔹 Increased size
+              icon: Icon(Icons.home, color: Colors.white, size: 32),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 32,
-              ), // 🔹 Increased size
+              icon: Icon(Icons.person, color: Colors.white, size: 32),
               onPressed: () {},
             ),
           ],
@@ -91,79 +92,111 @@ class StudentDashboard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Hello,\nStudent_Name',
+                    'Hello,\n$username', // Display the username here
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      todayDate,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[900],
-                      ),
-                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 20), // 🔹 Adds spacing before the containers
-            Expanded(
-              child: GridView.count(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1, // 🔹 Makes the containers bigger
-                children: [
-                  DashboardTile(icon: Icons.restaurant, label: "Mess Bill"),
-                  DashboardTile(icon: Icons.check_circle, label: "Attendance"),
-                  DashboardTile(icon: Icons.warning, label: "Complaints"),
-                  DashboardTile(
-                    icon: Icons.account_balance_wallet,
-                    label: "Transactions",
-                  ),
-                ],
+            SizedBox(height: 20),
+
+            // ✅ Leave Register Container
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LeaveRegister()),
+                );
+              },
+              child: Container(
+                margin: EdgeInsets.all(16),
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.book, color: Colors.blue, size: 40),
+                    SizedBox(width: 10),
+                    Text(
+                      'Leave Register',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ✅ Mess Bill Container
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MessBillPage()),
+                );
+              },
+              child: Container(
+                margin: EdgeInsets.all(16),
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.restaurant, color: Colors.orange, size: 40),
+                    SizedBox(width: 10),
+                    Text(
+                      'Mess Bill',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ✅ Transactions Container
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TransactionPage()),
+                );
+              },
+              child: Container(
+                margin: EdgeInsets.all(16),
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.monetization_on, color: Colors.green, size: 40),
+                    SizedBox(width: 10),
+                    Text(
+                      'Transactions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class DashboardTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const DashboardTile({super.key, required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(2, 2)),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 40, color: Colors.blue),
-          SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
       ),
     );
   }

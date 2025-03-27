@@ -42,11 +42,13 @@ class _LoginScreenState extends State<LoginScreen> {
         final responseBody = json.decode(response.body);
         String accessToken = responseBody['data']['accessToken'];
         String refreshToken = responseBody['data']['refreshToken'];
+        String username = responseBody['data']['username'];
 
         // Store the tokens in SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('accessToken', accessToken);
         await prefs.setString('refreshToken', refreshToken);  
+        await prefs.setString('username', username);
   // Print the access token to the console
         // Navigate to the student dashboard after login
         Navigator.pushReplacementNamed(context, '/student_dashboard');

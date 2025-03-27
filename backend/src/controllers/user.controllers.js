@@ -3,11 +3,16 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
 import { LeaveRegister } from "../models/leaveregister.models.js";
 import { Complaint } from "../models/complaints.models.js";
+import { MessBill } from "../models/messbill.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/emailService.js";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
+import { razorpay } from "../utils/razorpay.js";
+import PDFDocument from "pdfkit";
 
 //testing 
 
@@ -18,6 +23,21 @@ import crypto from "crypto";
 //         password: "password12345",
 //         block:"IH"
 //     }
+// {
+//     username: "john_doe",
+//     email: "john.doe@example.com",
+//     password: "password12345"
+// },
+// {
+//     username: "jane_smith",
+//     email: "jane.smith@example.com",
+//     password: "securepassword456"
+// },
+// {
+//     username: "alex_jones",
+//     email: "alex.jones@example.com",
+//     password: "alexpass789"
+// }
 // ];
 
 // async function insertUsers() {
@@ -435,4 +455,171 @@ export const updateComplaintStatus=asyncHandler(async(req,res,next)=>{
 
     return res.status(200)
     .json(new ApiResponse(200, "Complaint status updated",complaint))
+})
+
+export const publishMessBill=asyncHandler(async(req,res,next)=>{
+    const { month,year,mpd_rate, ksw_charges, electricity_charges,est,month_number } = req.body;
+    if (!mpd_rate || !ksw_charges || !electricity_charges || !month||!year||!est||!month_number) {
+        res.status(400).json(new ApiResponse(400,"All fields are required"))
+    }
+    const users=await User.findAll()
+    let rent;
+    let total_amount;
+    if(users.length==0){
+        res.status(404).json(new ApiResponse(404,"No data found"))
+    }
+    let messBills=[]
+    for(let user of users){
+        const days_present=user.totalPresentDays
+        const mess_fee = mpd_rate * days_present;
+        if(user.role=="Student"){
+            total_amount =
+            mess_fee +
+            ksw_charges / users.length +
+            electricity_charges / users.length +
+            est;
+            rent=0;
+        }
+        else{
+            total_amount =
+            mess_fee +
+            ksw_charges / users.length +
+            electricity_charges / users.length +
+            est+4083;
+            rent=4083;
+        }
+        const messBill = await MessBill.create({
+            student_id: user.id,
+            mpd_rate,
+            username:user.username,
+            ksw_charges:ksw_charges/users.length,
+            electricity_charges:electricity_charges/users.length,
+            rent,
+            days_present,
+            total_amount,
+            month,
+            year,
+            month_number
+        });
+        messBills.push(messBill)
+
+    }
+    res.status(201).json(new ApiResponse(201, "Mess Bills Generated"))
+})
+export const viewMyBills=asyncHandler(async(req,res)=>{
+    const id=req.user.id
+    const messBill = await MessBill.findAll({ where: { student_id: id },order: [
+        ['year', 'DESC'],    // Order by year in ascending order
+        ['month_number', 'DESC']    // Order by month in ascending order
+    ] });
+    if (!messBill) {
+        res.status(404).json(new ApiResponse(404, "Mess Bill not found"));
+    }
+
+    res.status(200).json(new ApiResponse(200, "Mess Bill Fetched", messBill));
+})
+export const viewBills=asyncHandler(async(req,res)=>{
+    const {month,year}=req.body
+    const messBills=await MessBill.findAll({where:{month:month,year:year}})
+    if (!messBills) {
+        res.status(404).json(new ApiResponse(404, "Mess Bills not found"));
+    }
+    res.status(200).json(new ApiResponse(200, "Mess Bills Fetched", messBills));
+})
+
+export const createOrder=asyncHandler(async(req,res)=>{
+    const {billId}=req.body
+
+    const messbill=await MessBill.findByPk(billId)
+
+    if(!messbill){
+       return res.status(404).json(new ApiResponse(404,"Mess Bill Not Found"))
+    }
+    if(messbill.status=="Paid"){
+        return res.status(400).json(new ApiResponse(400,"Mess Bill Already Paid"))
+    }
+    const options = {
+        amount: messbill.total_amount * 100, // Convert to paise
+        currency: "INR",
+        receipt: billId,
+    }
+    try {
+        const order = await razorpay.orders.create(options);
+
+        return res.status(201).json(new ApiResponse(201, "Payment Order Created", order));
+    } catch (error) {
+        console.error("Error creating Razorpay order:", error);
+        return res.status(500).json(new ApiResponse(500, "Payment Order Failed", error));
+    }
+
+})
+
+export const verifyPayment=asyncHandler(async(req,res)=>{
+    const {razorpay_payment_id, razorpay_order_id, razorpay_signature, billId}=req.body
+
+    const crypto = await import("crypto");
+    const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+    const expectedSignature = hmac.digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+        return res.status(400).json(new ApiResponse(400, "Invalid Payment Signature"));
+    }
+    else{
+    const messBill = await MessBill.findByPk(billId);
+    if (!messBill) {
+        return res.status(404).json(new ApiResponse(404, "Mess Bill not found"));
+    }
+
+    messBill.status = "Paid";
+    await messBill.save();
+
+    return res.status(200).json(new ApiResponse(200, "Payment Successful, Bill Updated"));}
+})
+
+export const generateInvoice=asyncHandler(async(req,res)=>{
+    const { billId } = req.params;
+
+    // Fetch mess bill details
+    const messBill = await MessBill.findByPk(billId, { include: Student });
+    if (!messBill) res.status(404).json(new ApiResponse(404, "Mess Bill not found"));
+
+    // Create a PDF Document
+    const doc = new PDFDocument();
+    const fileName = `invoice_${billId}.pdf`;
+    const filePath = path.join("invoices", fileName);
+    
+    // Stream PDF to file
+    doc.pipe(fs.createWriteStream(filePath));
+
+    // 📝 Add Invoice Header
+    doc.fontSize(20).text("Hostel Mess Bill Invoice", { align: "center" }).moveDown();
+    doc.fontSize(12).text(`Invoice ID: ${billId}`);
+    doc.text(`Student Name: ${messBill.Student.name}`);
+    doc.text(`Hostel Block: ${messBill.Student.block}`);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`);
+    doc.moveDown();
+
+    // 💰 Add Payment Details
+    doc.text(`Mess Charges: ₹${messBill.mpd * messBill.totalPresentDays}`);
+    doc.text(`Electricity: ₹${messBill.elec}`);
+    doc.text(`Rent: ₹${messBill.rent}`);
+    doc.text(`KSW: ₹${messBill.ksw}`);
+    doc.text(`Estimation Charge: ₹${messBill.est}`);
+    doc.moveDown();
+    
+    // 🔥 Total Amount
+    doc.fontSize(14).text(`Total Amount Paid: ₹${messBill.total_amount}`, { bold: true });
+
+    // ✅ Payment Status
+    doc.moveDown();
+    doc.fontSize(12).text(`Payment Status: ${messBill.status === "Paid" ? "✅ Paid" : "❌ Pending"}`, { bold: true });
+
+    // 🎯 End & Save PDF
+    doc.end();
+
+    // Send file to frontend
+    res.download(filePath, fileName, (err) => {
+        if (err) return res.status(500).json(new ApiResponse(500, "Invoice Download Failed"));
+    });
 })

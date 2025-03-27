@@ -1,212 +1,184 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'student_dashboard.dart';
 
-class MessBillScreen extends StatefulWidget {
+class MessBillPage extends StatefulWidget {
+  const MessBillPage({super.key});
+
   @override
-  _MessBillScreenState createState() => _MessBillScreenState();
+  State<MessBillPage> createState() => _MessBillPageState();
 }
 
-class _MessBillScreenState extends State<MessBillScreen> {
-  TextEditingController fromDateController = TextEditingController();
-  TextEditingController toDateController = TextEditingController();
-  DateTime? selectedFromDate;
-  DateTime? selectedToDate;
+class _MessBillPageState extends State<MessBillPage> {
+  String selectedYear = "2025";
+  String selectedMonth = "January";
+  int? daysPresent;
+  double? totalAmount;
 
-  List<Map<String, dynamic>> students = [
-    {"name": "John Doe", "roomNo": 101, "dueAmount": 500},
-    {"name": "Alice Smith", "roomNo": 102, "dueAmount": 0},
-    {"name": "Bob Johnson", "roomNo": 103, "dueAmount": 300},
-    {"name": "Emma Brown", "roomNo": 104, "dueAmount": 700},
-  ];
+  final Map<String, Map<String, Map<String, dynamic>>> billData = {
+    "2025": {
+      "January": {"daysPresent": 25, "totalAmount": 1250.0},
+      "February": {"daysPresent": 20, "totalAmount": 1000.0},
+      "March": {"daysPresent": 23, "totalAmount": 1150.0},
+      "April": {"daysPresent": 27, "totalAmount": 1350.0},
+    },
+    "2024": {
+      "January": {"daysPresent": 22, "totalAmount": 1100.0},
+      "February": {"daysPresent": 19, "totalAmount": 950.0},
+      "March": {"daysPresent": 21, "totalAmount": 1050.0},
+      "April": {"daysPresent": 26, "totalAmount": 1300.0},
+    },
+  };
 
-  List<Map<String, dynamic>> filteredStudents = [];
+  void updateBillDetails(String year, String month) {
+    setState(() {
+      selectedYear = year;
+      selectedMonth = month;
+      daysPresent = billData[year]?[month]?["daysPresent"];
+      totalAmount = billData[year]?[month]?["totalAmount"];
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    filteredStudents = List.from(students); // Initialize with all students
-  }
-
-  void applyFilter() {
-    setState(() {
-      filteredStudents = students.where((student) {
-        return true; // Modify if needed to filter by date
-      }).toList();
-    });
-  }
-
-  void sendNotifications() {
-    List<String> dueStudents = filteredStudents
-        .where((student) => student["dueAmount"] > 0)
-        .map((student) => student["name"].toString()) // Ensure String type
-        .toList();
-
-    if (dueStudents.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Notification sent to: ${dueStudents.join(', ')}"),
-          backgroundColor: Colors.deepPurple,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("No students with dues."),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  }
-
-  Future<void> _selectDate(BuildContext context, bool isFromDate) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2022),
-      lastDate: DateTime(2030),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        if (isFromDate) {
-          selectedFromDate = pickedDate;
-          fromDateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
-        } else {
-          selectedToDate = pickedDate;
-          toDateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
-        }
-      });
-    }
+    updateBillDetails(selectedYear, selectedMonth);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Mess Bill", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.blue,
+        title: const Text('Mess Bill', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const StudentDashboard()),
+            );
           },
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
-            onPressed: sendNotifications,
-          ),
-        ],
       ),
-      body: Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, Colors.purple.shade100], // Matches Complaints Screen
-          ),
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Year & Month Selection Row
             Row(
               children: [
+                // Year Dropdown
                 Expanded(
-                  child: TextField(
-                    controller: fromDateController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: "From Date",
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.calendar_today),
-                        onPressed: () => _selectDate(context, true),
-                      ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue),
+                    ),
+                    child: DropdownButton<String>(
+                      value: selectedYear,
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            selectedYear = newValue;
+                            selectedMonth = billData[selectedYear]!.keys.first;
+                            updateBillDetails(selectedYear, selectedMonth);
+                          });
+                        }
+                      },
+                      items: billData.keys.map<DropdownMenuItem<String>>(
+                        (String year) {
+                          return DropdownMenuItem<String>(
+                            value: year,
+                            child: Text(year),
+                          );
+                        },
+                      ).toList(),
                     ),
                   ),
                 ),
-                SizedBox(width: 10),
+                
+                const SizedBox(width: 10), // Space between dropdowns
+                
+                // Month Selection
                 Expanded(
-                  child: TextField(
-                    controller: toDateController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: "To Date",
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.calendar_today),
-                        onPressed: () => _selectDate(context, false),
-                      ),
+                  child: SizedBox(
+                    height: 50,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: billData[selectedYear]!.keys.map<Widget>((String month) {
+                        return GestureDetector(
+                          onTap: () {
+                            updateBillDetails(selectedYear, month);
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: selectedMonth == month ? Colors.blue : Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue),
+                            ),
+                            child: Center(
+                              child: Text(
+                                month,
+                                style: TextStyle(
+                                  color: selectedMonth == month ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
-                ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: applyFilter,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text("Search", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
-            SizedBox(height: 20),
-            _buildTable(),
+
+            const SizedBox(height: 20),
+
+            // Bill Details
+            if (daysPresent != null && totalAmount != null)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Days Present: $daysPresent", style: const TextStyle(fontSize: 18)),
+                    const SizedBox(height: 8),
+                    Text("Total Payable Amount: ₹$totalAmount", style: const TextStyle(fontSize: 18)),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Payment of ₹$totalAmount initiated!")),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                        ),
+                        child: const Text("Pay", style: TextStyle(fontSize: 18, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTable() {
-    return Table(
-      border: TableBorder.all(color: Colors.grey.shade400, width: 1),
-      columnWidths: {
-        0: FractionColumnWidth(0.3), // Name
-        1: FractionColumnWidth(0.2), // Room No
-        2: FractionColumnWidth(0.3), // Due Amount
-        3: FractionColumnWidth(0.2), // Status
-      },
-      children: [
-        TableRow(
-          decoration: BoxDecoration(color: Colors.deepPurple),
-          children: [
-            _tableHeader("Name"),
-            _tableHeader("Room No"),
-            _tableHeader("Due Amount"),
-            _tableHeader("Status"),
-          ],
-        ),
-        ...filteredStudents.map((student) => _buildRow(student)).toList(),
-      ],
-    );
-  }
-
-  TableRow _buildRow(Map<String, dynamic> student) {
-    return TableRow(
-      children: [
-        _tableCell(student["name"]),
-        _tableCell(student["roomNo"].toString()),
-        _tableCell("₹${student["dueAmount"]}", color: student["dueAmount"] > 0 ? Colors.red : Colors.green),
-        _tableCell(student["dueAmount"] > 0 ? "Due" : "Paid", color: student["dueAmount"] > 0 ? Colors.red : Colors.green),
-      ],
-    );
-  }
-
-  Widget _tableHeader(String text) {
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16), textAlign: TextAlign.center),
-    );
-  }
-
-  Widget _tableCell(String text, {Color? color}) {
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 14, color: color ?? Colors.black),
       ),
     );
   }

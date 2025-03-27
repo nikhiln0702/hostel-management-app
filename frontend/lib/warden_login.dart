@@ -56,6 +56,7 @@ class _WardenLoginState extends State<WardenLogin> {
         showErrorDialog(context, errorMessage);
       }
     } catch (error) {
+      print('$error');
       showErrorDialog(context, "An error occurred. Please try again.");
     }
   }

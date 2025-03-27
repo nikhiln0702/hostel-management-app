@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisSpacing: 15,
                 childAspectRatio: 1.3,
                 children: [
-                  _buildOptionCard(context, "Mess Bill", Icons.receipt, MessBillScreen()),
+                  _buildOptionCard(context, "Mess Bill", Icons.receipt, MessBillPage()),
                   _buildOptionCard(context, "Attendance", Icons.check_circle, AttendanceScreen()),
                   _buildOptionCard(context, "Complaints", Icons.report_problem, ComplaintsScreen()),
                   _buildOptionCard(context, "Warden Notes", Icons.note, WardenNotesScreen()),
