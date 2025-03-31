@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js";
 import { LeaveRegister } from "../models/leaveregister.models.js";
 import { Complaint } from "../models/complaints.models.js";
 import { MessBill } from "../models/messbill.models.js";
+import { Transaction } from "../models/transaction.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -64,6 +65,7 @@ import PDFDocument from "pdfkit";
 
 //Login a student
 export const loginStudent = asyncHandler(async (req, res, next) => {
+    console.log(req.body)
     //Get email and password 
     const { email, password, rememberMe } = req.body;
 
@@ -555,6 +557,7 @@ export const createOrder=asyncHandler(async(req,res)=>{
 })
 
 export const verifyPayment=asyncHandler(async(req,res)=>{
+    const id=req.user.id
     const {razorpay_payment_id, razorpay_order_id, razorpay_signature, billId}=req.body
 
     const crypto = await import("crypto");
@@ -573,6 +576,17 @@ export const verifyPayment=asyncHandler(async(req,res)=>{
 
     messBill.status = "Paid";
     await messBill.save();
+    await Transaction.create({
+        id: razorpay_payment_id,
+        studentId:id,
+        billId,
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+        amount: messBill.total_amount,
+        status: "Paid",
+        month:messBill['month'],
+        year:messBill['year']
+    });
 
     return res.status(200).json(new ApiResponse(200, "Payment Successful, Bill Updated"));}
 })
@@ -623,3 +637,12 @@ export const generateInvoice=asyncHandler(async(req,res)=>{
         if (err) return res.status(500).json(new ApiResponse(500, "Invoice Download Failed"));
     });
 })
+export const getTransactionHistory = asyncHandler(async (req, res) => {
+    const userId= req.user.id;
+    const transactions = await Transaction.findAll({
+        where: { studentId:userId },
+        order: [["createdAt", "DESC"]]
+    });
+    console.log(transactions)
+    res.status(200).json(new ApiResponse(200, "Transaction History", transactions));
+});

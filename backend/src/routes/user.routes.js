@@ -1,6 +1,6 @@
 import { Router} from "express";
 import { loginStudent ,loginWarden ,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister,viewAbsentStudents ,updateRole,addComplaint,getComplaints,updateComplaintStatus} from "../controllers/user.controllers.js";
-import { publishMessBill,viewMyBills,viewBills,createOrder,verifyPayment } from "../controllers/user.controllers.js";
+import { publishMessBill,viewMyBills,viewBills,createOrder,verifyPayment,getTransactionHistory} from "../controllers/user.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { verifyRole } from "../middlewares/authrole.middleware.js";
 import { changePasswordLimiter } from "../middlewares/ratelimiter.middleware.js";
@@ -29,7 +29,7 @@ router.route("/viewmessbill").get(verifyJWT,verifyRole(["Student","Admin"]),view
 router.route("/viewbills").post(verifyJWT,verifyRole(["Warden","Admin"]),viewBills)
 router.route("/createorder").post(verifyJWT,verifyRole(["Student","Admin"]),createOrder)
 router.route("/verifypayment").post(verifyJWT,verifyRole(["Student","Admin"]),verifyPayment)
-
+router.route("/gettransactionhistory").get(verifyJWT,verifyRole(["Student","Admin"]),getTransactionHistory)
 
 
 

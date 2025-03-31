@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPre
 import 'student_leave_register.dart'; // ✅ Import Leave Register Page
 import 'student_mess_bill.dart'; // ✅ Import Mess Bill Page
 import 'student_transaction.dart'; // ✅ Import Transactions Page
+import 'student_complaint_form.dart'; // ✅ Import Complaints Page (Create this page separately)
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -186,6 +187,38 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     SizedBox(width: 10),
                     Text(
                       'Transactions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ✅ Complaints Container
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ComplaintsPage()), // Create ComplaintsPage separately
+                );
+              },
+              child: Container(
+                margin: EdgeInsets.all(16),
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.feedback, color: Colors.red, size: 40),
+                    SizedBox(width: 10),
+                    Text(
+                      'Complaints',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

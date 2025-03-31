@@ -4,6 +4,7 @@ import { connectDB, syncDB } from './db/db.js';
 import "../scripts/cronJobs.js"; // Cron jobs file
 import { MessBill } from './models/messbill.models.js';
 import { User } from './models/user.models.js';
+import { Transaction } from './models/transaction.models.js';
 dotenv.config({
     path: './env', // Ensure .env file is correctly configured
 });

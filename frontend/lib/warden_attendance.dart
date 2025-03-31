@@ -44,7 +44,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       // Make the API request with the Bearer token in the header
       final response = await http.get(
-        Uri.parse('http://localhost:7000/api/v1/viewstudents'),  // Replace with actual endpoint
+        Uri.parse('http://192.168.1.5:7000/api/v1/viewstudents'),  // Replace with actual endpoint
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',

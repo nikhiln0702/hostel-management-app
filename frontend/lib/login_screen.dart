@@ -1,10 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,17 +13,22 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool rememberMe=false;
+  bool rememberMe = false;
 
   // Function to send login request to Node.js backend
- Future<void> login(String email, String password) async {
-    final url = Uri.parse('http://localhost:7000/api/v1/loginstudent');
-  bool rememberMe=false;
+  Future<void> login(String email, String password) async {
+    // Update the URL to the correct IP or localhost for emulator
+    final url = Uri.parse('http://192.168.1.5:7000/api/v1/loginstudent');  // For Android emulator
+    // If using a physical device, replace '10.0.2.2' with your PC's IP address
+
     try {
       if (email.isEmpty || password.isEmpty) {
         showErrorDialog(context, "Email and password are required.");
         return;
       }
+
+      // Hide the keyboard after login attempt
+      FocusScope.of(context).requestFocus(FocusNode());
 
       final response = await http.post(
         url,
@@ -49,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('accessToken', accessToken);
         await prefs.setString('refreshToken', refreshToken);  
         await prefs.setString('username', username);
-  // Print the access token to the console
+
         // Navigate to the student dashboard after login
         Navigator.pushReplacementNamed(context, '/student_dashboard');
       } else {
@@ -57,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
         showErrorDialog(context, errorMessage);
       }
     } catch (error) {
+      print('Error occurred: $error');  // More specific error logging
       showErrorDialog(context, "An error occurred. Please try again.");
     }
   }
@@ -129,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Sign In Button (Blue)
                   _buildButton(
                     "Sign In",
-                    () => login(emailController.text, passwordController.text),
+                        () => login(emailController.text, passwordController.text),
                     color: Colors.blue,
                   ),
 
@@ -172,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Reusable Button with Custom Colors
   Widget _buildButton(
     String text,
-    VoidCallback onPressed, {
+    VoidCallback? onPressed, {
     Color color = Colors.blue,
     IconData? icon,
   }) {
@@ -181,8 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
       height: 50, // Same height for all buttons
       child: ElevatedButton.icon(
         onPressed: onPressed,
-        icon:
-            icon != null ? Icon(icon, color: Colors.white) : SizedBox.shrink(),
+        icon: icon != null ? Icon(icon, color: Colors.white) : SizedBox.shrink(),
         label: Text(text, style: TextStyle(fontSize: 16, color: Colors.white)),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
@@ -196,17 +198,16 @@ class _LoginScreenState extends State<LoginScreen> {
   void showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text("Login Failed"),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text("OK"),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text("Login Failed"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text("OK"),
           ),
+        ],
+      ),
     );
   }
 }

@@ -44,7 +44,7 @@ class _LeaveRegisterState extends State<LeaveRegister> {
     // Replace with your backend URL
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:7000/api/v1/leaveregister'),
+        Uri.parse('http://192.168.1.5:7000/api/v1/leaveregister'),
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',

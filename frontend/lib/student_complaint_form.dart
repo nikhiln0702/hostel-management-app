@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'student_dashboard.dart';
 
 void main() {
   runApp(ComplaintsApp());
@@ -23,6 +22,129 @@ class ComplaintsPage extends StatefulWidget {
 }
 
 class _ComplaintsPageState extends State<ComplaintsPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Complaints"),
+        backgroundColor: Colors.blue,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Colors.blue.shade300], // Set gradient to white and blue
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // "File a Complaint" Box
+              GestureDetector(
+                onTap: () {
+                  // Navigate to the "File a Complaint" form
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => FileComplaintPage()),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 150,
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8)
+                    ],
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.file_copy,
+                          color: Colors.blue.shade800,
+                          size: 30,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          "File a Complaint",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // "View Complaints" Box
+              GestureDetector(
+                onTap: () {
+                  // Navigate to the "View Complaints" page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ViewComplaintsPage()),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 150,
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8)
+                    ],
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.view_list,
+                          color: Colors.blue.shade800,
+                          size: 30,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          "View Complaints",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// File a Complaint Page with Glassmorphic Form
+class FileComplaintPage extends StatefulWidget {
+  @override
+  _FileComplaintPageState createState() => _FileComplaintPageState();
+}
+
+class _FileComplaintPageState extends State<FileComplaintPage> {
   String selectedCategory = 'Maintenance'; // Default category
   TextEditingController complaintController = TextEditingController();
 
@@ -61,7 +183,7 @@ class _ComplaintsPageState extends State<ComplaintsPage> {
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-          title: Text("Complaints"),
+          title: Text("File a Complaint"),
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -122,21 +244,20 @@ class _ComplaintsPageState extends State<ComplaintsPage> {
                                 selectedCategory = newValue!;
                               });
                             },
-                            items:
-                                [
-                                  'Maintenance',
-                                  'Electricity',
-                                  'Water Supply',
-                                  'Food & Mess',
-                                ].map((category) {
-                                  return DropdownMenuItem(
-                                    value: category,
-                                    child: Text(
-                                      category,
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  );
-                                }).toList(),
+                            items: [
+                              'Maintenance',
+                              'Electricity',
+                              'Water Supply',
+                              'Food & Mess',
+                            ].map((category) {
+                              return DropdownMenuItem(
+                                value: category,
+                                child: Text(
+                                  category,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }).toList(),
                           ),
                           SizedBox(height: 16),
 
@@ -178,6 +299,35 @@ class _ComplaintsPageState extends State<ComplaintsPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// View Complaints Page
+class ViewComplaintsPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("View Complaints"),
+        backgroundColor: Colors.blue,
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView.builder(
+          itemCount: 5, // Placeholder count for demo
+          itemBuilder: (context, index) {
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 10),
+              child: ListTile(
+                title: Text("Complaint #${index + 1}"),
+                subtitle: Text("This is a description of the complaint."),
+              ),
+            );
+          },
         ),
       ),
     );

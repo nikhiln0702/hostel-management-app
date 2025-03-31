@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'student_dashboard.dart'; // ✅ Import StudentDashboard for navigation
+import 'student_dashboard.dart';
 
 class MessBillPage extends StatefulWidget {
   const MessBillPage({super.key});
@@ -12,17 +13,40 @@ class MessBillPage extends StatefulWidget {
 }
 
 class _MessBillPageState extends State<MessBillPage> {
+  Razorpay _razorpay = Razorpay();
   int selectedYear = 2025; // Default year
   String selectedMonth = "January"; // Default month
   int? daysPresent;
   double? totalAmount;
   String paymentStatus = "Pending";
 
-  bool isLoading = true; // For loading state
-  bool isError = false;  // For error state
-  List<dynamic> billData = []; // This will hold the fetched data
+  double? mpdRate;
+  double? kswCharges;
+  double? electricityCharges;
+  double? rent;
+  double? estCharges;
 
-  // Fetch Mess Bills from API
+  bool isLoading = true;
+  bool isError = false;
+  List<dynamic> billData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchMessBills();
+
+    // Initialize Razorpay event listeners
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _razorpay.clear();
+  }
+
   Future<void> fetchMessBills() async {
     setState(() {
       isLoading = true;
@@ -32,21 +56,25 @@ class _MessBillPageState extends State<MessBillPage> {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
-
       if (accessToken == null) {
-        showErrorDialog(context, "Access token is missing. Please log in again.");
+        showErrorDialog(
+          context,
+          "Access token is missing. Please log in again.",
+        );
         return;
       }
-      final response = await http.get(
-        Uri.parse('http://localhost:7000/api/v1/viewmessbill'), // Replace with your API URL
-       headers: {
-          'Authorization': 'Bearer $accessToken', // Include Bearer token in header
-          'Content-Type': 'application/json',
-        }, // If you use token authentication
-      );
 
+      final response = await http.get(
+        Uri.parse(
+          'http://192.168.1.5:7000/api/v1/viewmessbill',
+        ), // Replace with your API URL
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+      print(response.statusCode);
       if (response.statusCode == 200) {
-        // If the API call is successful, parse the data
         final data = json.decode(response.body);
         if (data['statuscode'] == 200) {
           setState(() {
@@ -56,31 +84,169 @@ class _MessBillPageState extends State<MessBillPage> {
           });
         } else {
           setState(() {
-            print("Error: ${response.statusCode} - ${response.body}");
             isLoading = false;
             isError = true;
           });
         }
       } else {
-        // Handle server errors
         setState(() {
-          print("Error: ${response.statusCode} - ${response.body}");
           isLoading = false;
           isError = true;
         });
       }
     } catch (e) {
-      // Handle errors like no internet connection, etc.
       setState(() {
-            print("Error: $e"); // Print the exception
-
+        print(e);
         isLoading = false;
         isError = true;
       });
     }
   }
 
-  // Show error dialog
+  void updateBillDetails(int year, String month) async {
+    final selectedBill = billData.firstWhere(
+      (bill) => bill['year'] == year && bill['month'] == month,
+      orElse: () => null,
+      
+    );
+
+    if (selectedBill != null) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('billId', selectedBill['id']);
+      
+      setState(() {
+        selectedYear = year;
+        selectedMonth = month;
+        daysPresent = selectedBill['days_present'];
+        totalAmount = selectedBill['total_amount'];
+        paymentStatus = selectedBill['status'];
+        mpdRate = (selectedBill['mpd_rate'] is int)
+          ? (selectedBill['mpd_rate'] as int).toDouble()
+          : selectedBill['mpd_rate']?.toDouble();
+
+      kswCharges = (selectedBill['ksw_charges'] is int)
+          ? (selectedBill['ksw_charges'] as int).toDouble()
+          : selectedBill['ksw_charges']?.toDouble();
+
+      electricityCharges = (selectedBill['electricity_charges'] is int)
+          ? (selectedBill['electricity_charges'] as int).toDouble()
+          : selectedBill['electricity_charges']?.toDouble();
+
+      rent = (selectedBill['rent'] is int)
+          ? (selectedBill['rent'] as int).toDouble()
+          : selectedBill['rent']?.toDouble();
+
+      estCharges = (selectedBill['est_charges'] is int)
+          ? (selectedBill['est_charges'] as int).toDouble()
+          : selectedBill['est_charges']?.toDouble();
+      
+      });
+    } else {
+      setState(() {
+        daysPresent = null;
+        totalAmount = null;
+        paymentStatus = "No bill available for this month";
+      });
+    }
+  }
+
+  Future<void> createRazorpayOrder() async {
+    if (totalAmount == null || totalAmount == 0) return;
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? accessToken = prefs.getString('accessToken');
+    String? billId = prefs.getString('billId');
+    print("Response Status: $billId");
+
+    final response = await http.post(
+      Uri.parse('http://192.168.1.5:7000/api/v1/createOrder'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({'billId': billId}),
+    );
+    print("Response Body: ${response.body}");
+
+    if (response.statusCode == 201) {
+      final data = json.decode(response.body);
+      if (data['statuscode'] == 201) {
+        var order = data['data'];
+
+        var options = {
+          'key': 'rzp_test_XbdZLXXcfjn6mc',
+          'amount': order['amount'],
+          'name': 'Mess Bill Payment',
+          'order_id': order['id'],
+          'description': 'Payment for mess bill',
+          'prefill': {'contact': '9876543210', 'email': 'test@example.com'},
+          'theme': {'color': '#F37254'},
+        };
+
+        _razorpay.open(options);
+      }
+    } else {
+      showErrorDialog(
+        context,
+        "Failed to create payment order. Please try again.",
+      );
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    verifyPayment(response.paymentId!, response.orderId!, response.signature!);
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    showErrorDialog(context, "Payment failed. Please try again.");
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    showErrorDialog(context, "Payment failed. Please try again.");
+  }
+
+  Future<void> verifyPayment(
+    String paymentId,
+    String orderId,
+    String signature,
+  ) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? accessToken = prefs.getString('accessToken');
+    String? billId = prefs.getString('billId');
+    final response = await http.post(
+      Uri.parse('http://192.168.1.5:7000/api/v1/verifyPayment'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'razorpay_payment_id': paymentId,
+        'razorpay_order_id': orderId,
+        'razorpay_signature': signature,
+        'billId': billId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        paymentStatus = 'Paid';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment Completed Successfully!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 3),),);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.remove('billId'); // or any other relevant key
+
+    } else {
+      showErrorDialog(
+        context,
+        "Payment verification failed. Please try again.",
+      );
+    }
+  }
+
   void showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
@@ -101,44 +267,25 @@ class _MessBillPageState extends State<MessBillPage> {
     );
   }
 
-  // Update Bill Details based on the selected year and month
-  void updateBillDetails(int year, String month) {
-    final selectedBill = billData.firstWhere(
-      (bill) => bill['year'] == year && bill['month'] == month,
-      orElse: () => null,
-    );
-
-    if (selectedBill != null) {
-      setState(() {
-        selectedYear = year;
-        selectedMonth = month;
-        daysPresent = selectedBill['days_present'];
-        totalAmount = selectedBill['total_amount'];
-        paymentStatus = selectedBill['status'];
-      });
-    } else {
-      // If no data is found for the selected year and month
-      setState(() {
-        daysPresent = null;
-        totalAmount = null;
-        paymentStatus = "Pending";
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchMessBills(); // Fetch data when the page is first loaded
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Extract unique years from the bill data
-    List<int> uniqueYears = billData
-        .map((bill) => bill['year'] as int)
-        .toSet()
-        .toList(); // Convert to Set and then back to List to remove duplicates
+    // List of months and years
+    List<String> months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    List<int> years = [2024, 2025]; // List of years for the dropdown
 
     return Scaffold(
       appBar: AppBar(
@@ -146,7 +293,11 @@ class _MessBillPageState extends State<MessBillPage> {
         elevation: 0,
         title: const Text(
           'Mess Bill',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -164,8 +315,14 @@ class _MessBillPageState extends State<MessBillPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            IconButton(icon: const Icon(Icons.home, color: Colors.white, size: 32), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.person, color: Colors.white, size: 32), onPressed: () {}),
+            IconButton(
+              icon: const Icon(Icons.home, color: Colors.white, size: 32),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.person, color: Colors.white, size: 32),
+              onPressed: () {},
+            ),
           ],
         ),
       ),
@@ -182,15 +339,16 @@ class _MessBillPageState extends State<MessBillPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Loading state
-              if (isLoading)
-                Center(child: CircularProgressIndicator()),
-              // Error state
+              if (isLoading) Center(child: CircularProgressIndicator()),
               if (isError)
-                Center(child: Text('Failed to load data. Please try again.', style: TextStyle(color: Colors.red))),
-              
-              // Month and Year Selection
-              if (!isLoading && !isError && billData.isNotEmpty)
+                Center(
+                  child: Text(
+                    'Failed to load data. Please try again.',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+
+              if (!isLoading && !isError)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -199,7 +357,13 @@ class _MessBillPageState extends State<MessBillPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Month:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const Text(
+                            "Month:",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -212,33 +376,44 @@ class _MessBillPageState extends State<MessBillPage> {
                               value: selectedMonth,
                               isExpanded: true,
                               icon: const Icon(Icons.arrow_drop_down),
-                              style: const TextStyle(fontSize: 16, color: Colors.black),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                               underline: const SizedBox(),
                               onChanged: (String? newValue) {
                                 if (newValue != null) {
+                                  setState(() {
+                                    selectedMonth = newValue;
+                                  });
                                   updateBillDetails(selectedYear, newValue);
                                 }
                               },
-                              items: billData.map<DropdownMenuItem<String>>((bill) {
-                                return DropdownMenuItem<String>(
-                                  value: bill['month'],
-                                  child: Text(bill['month']),
-                                );
-                              }).toList(),
+                              items:
+                                  months.map<DropdownMenuItem<String>>((month) {
+                                    return DropdownMenuItem<String>(
+                                      value: month,
+                                      child: Text(month),
+                                    );
+                                  }).toList(),
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    const SizedBox(width: 16), // Spacing between Month and Year
-
-                    // Year Dropdown (Ensure unique years)
+                    const SizedBox(width: 16),
+                    // Year Dropdown
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Year:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const Text(
+                            "Year:",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -251,22 +426,26 @@ class _MessBillPageState extends State<MessBillPage> {
                               value: selectedYear,
                               isExpanded: true,
                               icon: const Icon(Icons.arrow_drop_down),
-                              style: const TextStyle(fontSize: 16, color: Colors.black),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                               underline: const SizedBox(),
                               onChanged: (int? newValue) {
                                 if (newValue != null) {
                                   setState(() {
                                     selectedYear = newValue;
-                                    updateBillDetails(selectedYear, selectedMonth);
                                   });
+                                  updateBillDetails(newValue, selectedMonth);
                                 }
                               },
-                              items: uniqueYears.map<DropdownMenuItem<int>>((year) {
-                                return DropdownMenuItem<int>(
-                                  value: year,
-                                  child: Text(year.toString()),
-                                );
-                              }).toList(),
+                              items:
+                                  years.map<DropdownMenuItem<int>>((year) {
+                                    return DropdownMenuItem<int>(
+                                      value: year,
+                                      child: Text(year.toString()),
+                                    );
+                                  }).toList(),
                             ),
                           ),
                         ],
@@ -274,47 +453,83 @@ class _MessBillPageState extends State<MessBillPage> {
                     ),
                   ],
                 ),
-
-              const SizedBox(height: 20),
-
-              // No Bills available message below the dropdowns if no data is found
-              if (!isLoading && !isError && daysPresent == null && totalAmount == null)
-                Center(child: Text('No Bills available for this year and month.')),
-              
-              // Bill Details (Display the selected month/year)
-              if (!isLoading && !isError && daysPresent != null && totalAmount != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Days Present: $daysPresent", style: const TextStyle(fontSize: 18)),
-                      const SizedBox(height: 8),
-                      Text("Total Payable Amount: ₹$totalAmount", style: const TextStyle(fontSize: 18)),
-                      const SizedBox(height: 16),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Payment of ₹$totalAmount initiated!")),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                          ),
-                          child: const Text("Pay", style: TextStyle(fontSize: 18, color: Colors.white)),
-                        ),
-                      ),
-                    ],
+              if (!isLoading && !isError && daysPresent == null) ...[
+                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    "No bill available for the selected month and year.",
+                    style: TextStyle(fontSize: 18, color: Colors.red),
                   ),
                 ),
+              ],
+              if (!isLoading &&
+                  !isError &&
+                  daysPresent != null &&
+                  totalAmount != null) ...[
+                const SizedBox(height: 20),
+                // Attractive Card for Payment Details
+                Card(
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Days Present: $daysPresent", style: TextStyle(fontSize: 22, // Increased font size
+              fontWeight: FontWeight.bold, // Bold font weight
+              )),
+                        const SizedBox(height: 10),
+                        Text("Total Amount: ₹${totalAmount?.toStringAsFixed(2)}", style: TextStyle(fontSize: 22, // Increased font size
+              fontWeight: FontWeight.bold, // Bold font weight
+            )),
+                        const SizedBox(height: 10),
+                        Text("MPD Rate: ₹${mpdRate?.toStringAsFixed(2)}", style: TextStyle(fontSize: 18)),
+                        const SizedBox(height: 10),
+                        Text("KSW Charges: ₹${kswCharges?.toStringAsFixed(2)}", style: TextStyle(fontSize: 18)),
+                        const SizedBox(height: 10),
+                        Text("Electricity Charges: ₹${electricityCharges?.toStringAsFixed(2)}", style: TextStyle(fontSize: 18)),
+                        const SizedBox(height: 10),
+                        Text("Rent: ₹${rent?.toStringAsFixed(2)}", style: TextStyle(fontSize: 18)),
+                        const SizedBox(height: 10),
+                        Text("Estimated Charges: ₹${estCharges?.toStringAsFixed(2)}", style: TextStyle(fontSize: 18)),
+                        const SizedBox(height: 20),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Payment Status: $paymentStatus",
+                          style: TextStyle(
+                            fontSize: 18,
+                            color:
+                                paymentStatus == "Pending"
+                                    ? Colors.red
+                                    : Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        if (paymentStatus == "Pending")
+                          ElevatedButton(
+                            onPressed: createRazorpayOrder,
+                            child: const Text(
+                              "Pay",
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ),
+                      if (paymentStatus == "Paid")
+            ElevatedButton(
+              onPressed: () {
+                // Logic to show the fee receipt, either by opening a PDF or navigating to a new screen
+                // showFeeReceipt();
+              },
+              child: const Text("View Fee Receipt", style: TextStyle(fontSize: 18)),
+            ),
+                      ],
+
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

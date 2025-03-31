@@ -91,7 +91,7 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
 
   // Send data to backend API
   final response = await http.post(
-    Uri.parse('http://localhost:7000/api/v1/publishmessbill'),  // Replace with your API endpoint
+    Uri.parse('http://192.168.1.5:7000/api/v1/publishmessbill'),  // Replace with your API endpoint
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $accessToken',
