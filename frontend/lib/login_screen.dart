@@ -18,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Function to send login request to Node.js backend
   Future<void> login(String email, String password) async {
     // Update the URL to the correct IP or localhost for emulator
-    final url = Uri.parse('http://192.168.1.5:7000/api/v1/loginstudent');  // For Android emulator
+    final url = Uri.parse('http://192.168.34.182:7000/api/v1/loginstudent');  // For Android emulator
     // If using a physical device, replace '10.0.2.2' with your PC's IP address
 
     try {

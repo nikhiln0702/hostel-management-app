@@ -14,6 +14,8 @@ import fs from "fs";
 import path from "path";
 import { razorpay } from "../utils/razorpay.js";
 import PDFDocument from "pdfkit";
+import { Op } from "sequelize";
+
 
 //testing 
 
@@ -80,7 +82,7 @@ export const loginStudent = asyncHandler(async (req, res, next) => {
 
 
     //Invalid credentials
-    if (!user) {
+    if (!user || user.role!="Student") {
         return res.status(400)
         .json(new ApiResponse(400, "User not found"))
     }
@@ -120,7 +122,49 @@ export const loginWarden = asyncHandler(async (req, res, next) => {
 
 
 
-    if (!user) {
+    if (!user || user.role!="Warden") {
+        return res.status(401)
+        .json(new ApiResponse(401, "User not found"));
+    }
+    if (!(await user.isValidPassword(password))) {
+        return res.status(401)
+        .json(new ApiResponse(401, "Invalid password"));
+    }
+
+    //Generate token
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken(rememberMe);
+
+    //Save token to db
+    user.refreshToken = refreshToken;
+    const username=user.username
+
+    await user.save();
+
+
+    return res.status(200)
+        .json(new ApiResponse(200, "Warden logged in successfully", { username,email, password, accessToken, refreshToken }));
+})
+
+//Login Admin
+export const loginAdmin = asyncHandler(async (req, res, next) => {
+    //Get email and password 
+    const { email, password,rememberMe } = req.body;
+
+
+    if (!email || !password) {
+        return res.status(400)
+        .json(new ApiResponse(400, "Please provide email and password"));
+    }
+
+    //Finding user using email
+    const user = await User.findOne({ where: { email } });
+
+
+
+
+    console.log(user)
+    if (!user || user.role!="Admin") {
         return res.status(401)
         .json(new ApiResponse(401, "Invalid credentials"));
     }
@@ -143,7 +187,6 @@ export const loginWarden = asyncHandler(async (req, res, next) => {
     return res.status(200)
         .json(new ApiResponse(200, "Warden logged in successfully", { username,email, password, accessToken, refreshToken }));
 })
-
 //Logout
 export const logout = asyncHandler(async (req, res, next) => {
     
@@ -434,10 +477,30 @@ export const addComplaint=asyncHandler(async(req,res,next)=>{
     .json(new ApiResponse(201,"Complaint Filed"))
 })
 
+export const viewMyComplaints=asyncHandler(async(req,res)=>{
+    const student_id=req.user.id
+    const complaints=await Complaint.findAll({where:{student_id}})
+    if(!complaints){
+        return res.status(404).json(new ApiResponse(404,"No Complaints Found"))
+    }
+    return res.status(200).json(new ApiResponse(200,complaints))
+
+})
 export const getComplaints=asyncHandler(async(req,res,next)=>{
-    const complaints=await Complaint.findAll()
+    const complaints=await Complaint.findAll({include: [
+        {
+            model: User, // Including the User model to fetch the student name
+            attributes: ['username'],
+        }
+    ]})
+    const responseData = complaints.map(complaint => ({
+        studentName: complaint.User.username, // The student's name
+        category: complaint.category, // The total amount
+        status: complaint.status, // Payment status
+        description:complaint.description
+    }));
     return res.status(200)
-    .json(new ApiResponse(200,"Complaints Fetched",complaints))
+    .json(new ApiResponse(200,"Complaints Fetched",responseData))
 })
 
 export const updateComplaintStatus=asyncHandler(async(req,res,next)=>{
@@ -515,18 +578,28 @@ export const viewMyBills=asyncHandler(async(req,res)=>{
         ['month_number', 'DESC']    // Order by month in ascending order
     ] });
     if (!messBill) {
-        res.status(404).json(new ApiResponse(404, "Mess Bill not found"));
+        return res.status(404).json(new ApiResponse(404, "Mess Bill not found"));
     }
 
-    res.status(200).json(new ApiResponse(200, "Mess Bill Fetched", messBill));
+    return res.status(200).json(new ApiResponse(200, "Mess Bill Fetched", messBill));
 })
 export const viewBills=asyncHandler(async(req,res)=>{
     const {month,year}=req.body
-    const messBills=await MessBill.findAll({where:{month:month,year:year}})
+    const messBills=await MessBill.findAll({where:{month:month,year:year},include: [
+        {
+            model: User, // Including the User model to fetch the student name
+            attributes: ['username'],
+        }
+    ]})
     if (!messBills) {
-        res.status(404).json(new ApiResponse(404, "Mess Bills not found"));
+        return res.status(404).json(new ApiResponse(404, "Mess Bills not found"));
     }
-    res.status(200).json(new ApiResponse(200, "Mess Bills Fetched", messBills));
+    const responseData = messBills.map(bill => ({
+        studentName: bill.User.username, // The student's name
+        totalAmount: bill.total_amount, // The total amount
+        paymentStatus: bill.status, // Payment status
+    }));
+    return res.status(200).json(new ApiResponse(200, "Mess Bills Fetched", responseData));
 })
 
 export const createOrder=asyncHandler(async(req,res)=>{
@@ -537,6 +610,8 @@ export const createOrder=asyncHandler(async(req,res)=>{
     if(!messbill){
        return res.status(404).json(new ApiResponse(404,"Mess Bill Not Found"))
     }
+    console.log(messbill);  // Log the messbill object
+
     if(messbill.status=="Paid"){
         return res.status(400).json(new ApiResponse(400,"Mess Bill Already Paid"))
     }
@@ -637,6 +712,7 @@ export const generateInvoice=asyncHandler(async(req,res)=>{
         if (err) return res.status(500).json(new ApiResponse(500, "Invoice Download Failed"));
     });
 })
+
 export const getTransactionHistory = asyncHandler(async (req, res) => {
     const userId= req.user.id;
     const transactions = await Transaction.findAll({
@@ -645,4 +721,26 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
     });
     console.log(transactions)
     res.status(200).json(new ApiResponse(200, "Transaction History", transactions));
+});
+
+export const getAdminOverviewUsers = asyncHandler(async (req, res) => {
+    // Total Users
+    const totalUsers = await User.count();
+
+    // Active Users (assuming 'Active' means Present)
+    const activeUsers = await User.count({ where: { refreshToken: { [Op.ne]: null } } });
+
+    const students=await User.count({where:{role:"Student"}})
+    const staff=await User.count({where:{role:"Staff"}})
+    const warden=await User.count({where:{role:"Warden"}})
+    const responseData = {
+        totalUsers,
+        activeUsers,
+        students,
+        staff,
+        warden
+    };
+
+    return res.status(200).json(new ApiResponse(200, "User details retrieved", responseData));
+
 });

@@ -30,6 +30,13 @@ class FrontPage extends StatelessWidget {
                 "Student Login",
                 () => Navigator.pushNamed(context, '/login_screen'),
               ),
+              SizedBox(height: 20),
+
+              // Admin Login Button
+              _buildLoginButton(
+                "Admin Login",
+                () => Navigator.pushNamed(context, '/adminlogin'), // Adjust route name as needed
+              ),
             ],
           ),
         ),

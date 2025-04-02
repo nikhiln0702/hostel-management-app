@@ -54,8 +54,20 @@ class _LeaveRegisterState extends State<LeaveRegister> {
           'remarks': remarks,
         }),
       );
+      if (response.statusCode == 401) {
+        // Token expired, attempt to refresh
+        bool tokenRefreshed = await refreshAccessToken();
 
-      if (response.statusCode == 200) {
+        if (!tokenRefreshed) {
+          // If refresh fails, logout the user
+          await logout();
+        } else {
+          // Retry the request with the new token
+          return await submitLeaveRequest(date, remarks); // Retry the same complaint submission with new access token
+        }
+      }
+
+      else if (response.statusCode == 200) {
         // Handle the success response
         setState(() {
           isApplied = true; // Show the "Applied" banner
@@ -79,7 +91,37 @@ class _LeaveRegisterState extends State<LeaveRegister> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to submit request: $error")));
     }
   }
+  Future<bool> refreshAccessToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? refreshToken = prefs.getString('refreshToken');
 
+    final response = await http.post(
+      Uri.parse('http://192.168.1.5:7000/api/v1/refreshtoken'),
+      headers: {
+        'Authorization': 'Bearer $refreshToken',
+      },
+    );
+    print(response.body);
+    if (response.statusCode == 200) {
+      // Parse the new access token
+      final data = json.decode(response.body);
+      String accessToken = data['data']['accessToken']; // Assuming the response has a new accessToken
+      await prefs.setString('accessToken', accessToken);
+      return true;
+    } else {
+      // If refresh fails, return false
+      return false;
+    }
+  }
+  Future<void> logout() async {
+    // Here, you should clear stored tokens and navigate to the login screen.
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('accessToken');
+    await prefs.remove('refreshToken');
+
+    // After clearing, navigate to the login screen
+    Navigator.pushReplacementNamed(context, '/');
+  }
   void showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,

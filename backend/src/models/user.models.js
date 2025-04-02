@@ -87,7 +87,7 @@ User.prototype.generateAccessToken = function () {
         return jwt.sign(
             { email: this.email,id:this.id },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "30m" }
+            { expiresIn:  "30m" }
         )
     } catch (error) {
         throw Error(error)

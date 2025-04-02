@@ -4,7 +4,7 @@ import 'warden_mess_bill.dart';
 import 'warden_attendance.dart';
 import 'warden_complaint.dart';
 import 'warden_notes.dart';
-import 'warden_fees.dart'; // Import the new screen
+import 'user_profile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("Warden Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.deepPurple,
         actions: [
           IconButton(
@@ -44,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ],
+        automaticallyImplyLeading: false
       ),
       body: Container(
         padding: EdgeInsets.symmetric(vertical: 30, horizontal: 15),
@@ -96,11 +97,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(width: 40), // Space for Floating Action Button
             IconButton(
-              icon: Icon(Icons.settings, color: Colors.white, size: 28),
+              icon: Icon(Icons.person, color: Colors.white, size: 28),
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => WardenFeesScreen()), // Navigate to Fees Screen
+                  MaterialPageRoute(builder: (context) => UserProfilePage()), // Navigate to Fees Screen
                 );
               },
             ),

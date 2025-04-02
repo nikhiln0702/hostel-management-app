@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
-class WardenLogin extends StatefulWidget {
-  const WardenLogin({super.key});
+class AdminLogin extends StatefulWidget {
+  const AdminLogin({super.key});
 
   @override
-  _WardenLoginState createState() => _WardenLoginState();
+  _AdminLoginState createState() => _AdminLoginState();
 }
 
-class _WardenLoginState extends State<WardenLogin> {
+class _AdminLoginState extends State<AdminLogin> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool rememberMe = false;
 
   // Function to send login request to Node.js backend
   Future<void> login(String email, String password) async {
-    final url = Uri.parse('http://192.168.34.182:7000/api/v1/loginwarden'); // Change this as per your backend URL
+    final url = Uri.parse('http://192.168.34.182:7000/api/v1/loginadmin'); // Change this as per your backend URL
     
     try {
       if (email.isEmpty || password.isEmpty) {
@@ -34,7 +34,7 @@ class _WardenLoginState extends State<WardenLogin> {
           'rememberMe': rememberMe,
         }),
       );
-
+      print(response.body);
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
         String accessToken = responseBody['data']['accessToken'];
@@ -50,7 +50,7 @@ class _WardenLoginState extends State<WardenLogin> {
 
 
         // Navigate to the warden dashboard after login
-        Navigator.pushReplacementNamed(context, '/wardendashboard');
+        Navigator.pushReplacementNamed(context, '/admindashboard');
       } else {
         final errorMessage = json.decode(response.body)['message'];
         showErrorDialog(context, errorMessage);

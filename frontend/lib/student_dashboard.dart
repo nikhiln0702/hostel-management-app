@@ -4,12 +4,22 @@ import 'student_leave_register.dart'; // ✅ Import Leave Register Page
 import 'student_mess_bill.dart'; // ✅ Import Mess Bill Page
 import 'student_transaction.dart'; // ✅ Import Transactions Page
 import 'student_complaint_form.dart'; // ✅ Import Complaints Page (Create this page separately)
+import 'user_profile.dart';
+
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
 
   @override
   _StudentDashboardState createState() => _StudentDashboardState();
+}
+void main() {
+  runApp(MaterialApp(
+    routes: {
+      '/userProfile': (context) => UserProfilePage(),  // Define the route here
+    },
+    home: StudentDashboard(),
+  ));
 }
 
 class _StudentDashboardState extends State<StudentDashboard> {
@@ -44,18 +54,13 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications, color: Colors.white),
             onPressed: () {},
           ),
         ],
+        automaticallyImplyLeading: false
       ),
 
       bottomNavigationBar: BottomAppBar(
@@ -69,7 +74,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
             IconButton(
               icon: Icon(Icons.person, color: Colors.white, size: 32),
-              onPressed: () {},
+              onPressed: () {Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => UserProfilePage()), // Navigate to the UserProfilePage
+    );},
             ),
           ],
         ),

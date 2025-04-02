@@ -12,7 +12,9 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   // Use dynamic type for students
   List<Map<String, dynamic>> students = [];
+  List<Map<String, dynamic>> filteredStudents = [];
   String currentDate = ''; // Variable to hold the formatted current date
+  String filter = 'All'; // Default filter is 'All'
 
   @override
   void initState() {
@@ -44,7 +46,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       // Make the API request with the Bearer token in the header
       final response = await http.get(
-        Uri.parse('http://192.168.1.5:7000/api/v1/viewstudents'),  // Replace with actual endpoint
+        Uri.parse('http://192.168.34.182:7000/api/v1/viewstudents'),  // Replace with actual endpoint
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',
@@ -63,12 +65,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               'status': student['status'], // Initialize status field
             };
           }).toList();
+          _filterStudents(); // Filter students based on current filter
         });
       } else {
         showErrorDialog(context, "Failed to fetch students. Please try again.");
       }
     } catch (e) {
       showErrorDialog(context, "An error occurred: $e");
+    }
+  }
+
+  // ✅ Filter students based on the selected filter
+  void _filterStudents() {
+    if (filter == 'All') {
+      filteredStudents = students;
+    } else {
+      filteredStudents = students.where((student) {
+        return student['status'] == filter;
+      }).toList();
     }
   }
 
@@ -111,7 +125,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         ),
         child: Column(
           children: [
-            // Display the current date above the table
+            // Display the current date above the filter buttons
             Text(
               'Date: $currentDate',
               style: TextStyle(
@@ -120,100 +134,109 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 color: Colors.deepPurple,
               ),
             ),
-            SizedBox(height: 10), // Space between date and table
-            _buildTable(), // Display the students table
+            SizedBox(height: 10), // Space between date and filter buttons
+
+            // Filter buttons for All, Present, Absent
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _filterButton("All"),
+                _filterButton("Present"),
+                _filterButton("Absent"),
+              ],
+            ),
+            SizedBox(height: 10), // Space between filter buttons and cards
+
+            _buildCards(), // Display the student cards based on filtered list
           ],
         ),
       ),
     );
   }
 
-  // ✅ Build Table
-  Widget _buildTable() {
-    return Table(
-      border: TableBorder.all(color: Colors.grey.shade400, width: 1),
-      columnWidths: {
-        0: FractionColumnWidth(0.3),
-        1: FractionColumnWidth(0.2),
-        2: FractionColumnWidth(0.2),
-        3: FractionColumnWidth(0.2),
+  // ✅ Filter button widget
+  Widget _filterButton(String label) {
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          filter = label;
+          _filterStudents(); // Filter the students when a button is pressed
+        });
       },
-      children: [
-        TableRow(
-          decoration: BoxDecoration(color: Colors.deepPurple),
-          children: [
-            _tableHeader("Name"),
-            _tableHeader("Room No"),
-            _tableHeader("P/A"),
-            _tableHeader("Status"),
-          ],
-        ),
-        ...students.map((student) => _buildAttendanceRow(student)).toList(),
-      ],
+      style: ElevatedButton.styleFrom(
+        backgroundColor: filter == label ? Colors.deepPurple : Colors.grey.shade300,
+      ),
+      child: Text(label, style: TextStyle(color: filter == label ? Colors.white : Colors.black)),
     );
   }
 
-  TableRow _buildAttendanceRow(Map<String, dynamic> student) {
-    return TableRow(
-      children: [
-        _tableCell(student["name"] ?? "Unknown"),
-        _tableCell(student["roomNo"] ?? "Unknown"),
-        _dropdownCell(student),
-        _statusCell(student["status"]),
-      ],
-    );
-  }
-
-  Widget _tableHeader(String text) {
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Text(
-        text,
-        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
-        textAlign: TextAlign.center,
+  // ✅ Build Cards for each student
+  Widget _buildCards() {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: filteredStudents.length,
+        itemBuilder: (context, index) {
+          var student = filteredStudents[index];
+          return _buildStudentCard(student);
+        },
       ),
     );
   }
 
-  Widget _tableCell(String text) {
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 14),
+  // ✅ Build individual student card
+  Widget _buildStudentCard(Map<String, dynamic> student) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 10),
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Student Name
+            Text(
+              'Name: ${student['name']}',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 5),
+            // Room No
+            Text(
+              'Room No: ${student['roomNo']}',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 10),
+            // Present/Absent Dropdown
+            _dropdownCell(student),
+            SizedBox(height: 10),
+            // Status (Green for Present, Red for Absent)
+            _statusCell(student['status']),
+          ],
+        ),
       ),
     );
   }
 
   // ✅ Dropdown for Present/Absent
   Widget _dropdownCell(Map<String, dynamic> student) {
-    // Ensure that status is either 'Present' or 'Absent' before assigning to the dropdown value
-    String currentStatus = student["status"] ?? '';  // Default to an empty string if null
+    String currentStatus = student["status"] ?? 'Absent';  // Default to 'Absent' if null
 
-    // Ensure we only assign 'Present' or 'Absent' as a valid status value
-    if (currentStatus.isEmpty || (currentStatus != 'Present' && currentStatus != 'Absent')) {
-      currentStatus = 'Absent';  // Default to 'Absent' if it's invalid or empty
-    }
-
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: DropdownButton<String>(
-        value: currentStatus,  // Set the value from the student['status']
-        hint: Text("Present/Absent"),  // Placeholder text
-        isExpanded: true,
-        items: ["Present", "Absent"].map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          setState(() {
-            student["status"] = newValue!;  // Update the student's status on change
-          });
-        },
-      ),
+    return DropdownButton<String>(
+      value: currentStatus,  // Set the value from the student['status']
+      hint: Text("Present/Absent"),  // Placeholder text
+      isExpanded: true,
+      items: ["Present", "Absent"].map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (newValue) {
+        setState(() {
+          student["status"] = newValue!;  // Update the student's status on change
+          _filterStudents(); // Re-filter the list to update based on the selected status
+        });
+      },
     );
   }
 
@@ -221,16 +244,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Widget _statusCell(String? status) {
     bool isPresent = status == "Present";
 
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Text(
-        status?.isEmpty ?? true ? "" : (isPresent ? "Present" : "Absent"),
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 14,
-          color: status?.isEmpty ?? true ? Colors.black : (isPresent ? Colors.green : Colors.red),
-          fontWeight: FontWeight.bold,
-        ),
+    return Text(
+      status?.isEmpty ?? true ? "" : (isPresent ? "Present" : "Absent"),
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 14,
+        color: status?.isEmpty ?? true ? Colors.black : (isPresent ? Colors.green : Colors.red),
+        fontWeight: FontWeight.bold,
       ),
     );
   }

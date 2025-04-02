@@ -66,7 +66,7 @@ class _MessBillPageState extends State<MessBillPage> {
 
       final response = await http.get(
         Uri.parse(
-          'http://192.168.1.5:7000/api/v1/viewmessbill',
+          'http://192.168.34.182:7000/api/v1/viewmessbill',
         ), // Replace with your API URL
         headers: {
           'Authorization': 'Bearer $accessToken',
@@ -74,7 +74,19 @@ class _MessBillPageState extends State<MessBillPage> {
         },
       );
       print(response.statusCode);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 401) {
+        // Token expired, attempt to refresh
+        bool tokenRefreshed = await refreshAccessToken();
+
+        if (!tokenRefreshed) {
+          // If refresh fails, logout the user
+          await logout();
+        } else {
+          // Retry the request with the new token
+          return await fetchMessBills(); // Retry the same complaint submission with new access token
+        }
+      }
+      else if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['statuscode'] == 200) {
           setState(() {
@@ -102,7 +114,37 @@ class _MessBillPageState extends State<MessBillPage> {
       });
     }
   }
+  Future<bool> refreshAccessToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? refreshToken = prefs.getString('refreshToken');
 
+    final response = await http.post(
+      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
+      headers: {
+        'Authorization': 'Bearer $refreshToken',
+      },
+    );
+    print(response.body);
+    if (response.statusCode == 200) {
+      // Parse the new access token
+      final data = json.decode(response.body);
+      String accessToken = data['data']['accessToken']; // Assuming the response has a new accessToken
+      await prefs.setString('accessToken', accessToken);
+      return true;
+    } else {
+      // If refresh fails, return false
+      return false;
+    }
+  }
+  Future<void> logout() async {
+    // Here, you should clear stored tokens and navigate to the login screen.
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('accessToken');
+    await prefs.remove('refreshToken');
+
+    // After clearing, navigate to the login screen
+    Navigator.pushReplacementNamed(context, '/');
+  }
   void updateBillDetails(int year, String month) async {
     final selectedBill = billData.firstWhere(
       (bill) => bill['year'] == year && bill['month'] == month,
@@ -159,7 +201,7 @@ class _MessBillPageState extends State<MessBillPage> {
     print("Response Status: $billId");
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.5:7000/api/v1/createOrder'),
+      Uri.parse('http://192.168.34.182:7000/api/v1/createOrder'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
@@ -214,7 +256,7 @@ class _MessBillPageState extends State<MessBillPage> {
     String? accessToken = prefs.getString('accessToken');
     String? billId = prefs.getString('billId');
     final response = await http.post(
-      Uri.parse('http://192.168.1.5:7000/api/v1/verifyPayment'),
+      Uri.parse('http://192.168.34.182:7000/api/v1/verifyPayment'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',

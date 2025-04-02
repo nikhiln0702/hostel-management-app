@@ -18,7 +18,7 @@ const Complaint = sequelize.define("Complaint", {
         },
     },
     category: {
-        type: DataTypes.ENUM("Maintenance", "Mess", "Others"),
+        type: DataTypes.STRING,
         allowNull: false
     },
     description: {
