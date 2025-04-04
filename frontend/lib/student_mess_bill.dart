@@ -160,7 +160,7 @@ class _MessBillPageState extends State<MessBillPage> {
         selectedYear = year;
         selectedMonth = month;
         daysPresent = selectedBill['days_present'];
-        totalAmount = selectedBill['total_amount'];
+        totalAmount = selectedBill['total_amount'].toDouble();
         paymentStatus = selectedBill['status'];
         mpdRate = (selectedBill['mpd_rate'] is int)
           ? (selectedBill['mpd_rate'] as int).toDouble()

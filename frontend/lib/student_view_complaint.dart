@@ -69,7 +69,7 @@ class _ViewComplaintsPageState extends State<ViewComplaintsPage> {
     String? refreshToken = prefs.getString('refreshToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.5:7000/api/v1/refreshtoken'),
+      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
       headers: {
         'Authorization': 'Bearer $refreshToken',
       },

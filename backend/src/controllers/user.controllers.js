@@ -14,34 +14,43 @@ import fs from "fs";
 import path from "path";
 import { razorpay } from "../utils/razorpay.js";
 import PDFDocument from "pdfkit";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
+import { Attendance } from "../models/attendance.models.js";
 
 
 //testing 
 
 // const sampleUsers = [
-//     {
-//         username: "sajin satheesh",
-//         email: "sajinsk@example.com",
-//         password: "password12345",
-//         block:"IH"
-//     }
-// {
-//     username: "john_doe",
-//     email: "john.doe@example.com",
-//     password: "password12345"
-// },
-// {
-//     username: "jane_smith",
-//     email: "jane.smith@example.com",
-//     password: "securepassword456"
-// },
-// {
-//     username: "alex_jones",
-//     email: "alex.jones@example.com",
-//     password: "alexpass789"
-// }
-// ];
+//     { username: "alice_johnson", email: "alice.johnson@example.com", password: "password12345", block: "IH", room: 273 },
+//     { username: "michael_brown", email: "michael.brown@example.com", password: "password12345", block: "IH", room: 180 },
+//     { username: "emily_white", email: "emily.white@example.com", password: "password12345", block: "IH", room: 298 },
+//     { username: "chris_wilson", email: "chris.wilson@example.com", password: "password12345", block: "IH", room: 147 },
+//     { username: "sarah_miller", email: "sarah.miller@example.com", password: "password12345", block: "IH", room: 189 },
+//     { username: "david_clark", email: "david.clark@example.com", password: "password12345", block: "IH", room: 256 },
+//     { username: "olivia_harris", email: "olivia.harris@example.com", password: "password12345", block: "IH", room: 305 },
+//     { username: "james_lewis", email: "james.lewis@example.com", password: "password12345", block: "IH", room: 134 },
+//     { username: "ava_walker", email: "ava.walker@example.com", password: "password12345", block: "IH", room: 276 },
+//     { username: "noah_hall", email: "noah.hall@example.com", password: "password12345", block: "IH", room: 222 },
+//     { username: "sophia_allen", email: "sophia.allen@example.com", password: "password12345", block: "IH", room: 143 },
+//     { username: "william_young", email: "william.young@example.com", password: "password12345", block: "IH", room: 211 },
+//     { username: "mia_king", email: "mia.king@example.com", password: "password12345", block: "IH", room: 260 },
+//     { username: "benjamin_scott", email: "benjamin.scott@example.com", password: "password12345", block: "IH", room: 299 },
+//     { username: "charlotte_adams", email: "charlotte.adams@example.com", password: "password12345", block: "IH", room: 223 },
+//     { username: "ethan_baker", email: "ethan.baker@example.com", password: "password12345", block: "IH", room: 166 },
+//     { username: "amelia_wright", email: "amelia.wright@example.com", password: "password12345", block: "IH", room: 289 },
+//     { username: "logan_green", email: "logan.green@example.com", password: "password12345", block: "IH", room: 174 },
+//     { username: "harper_edwards", email: "harper.edwards@example.com", password: "password12345", block: "IH", room: 258 },
+//     { username: "lucas_turner", email: "lucas.turner@example.com", password: "password12345", block: "IH", room: 132 },
+//     { username: "ella_morris", email: "ella.morris@example.com", password: "password12345", block: "IH", room: 266 },
+//     { username: "mason_carter", email: "mason.carter@example.com", password: "password12345", block: "IH", room: 219 },
+//     { username: "scarlett_cooper", email: "scarlett.cooper@example.com", password: "password12345", block: "IH", room: 194 },
+//     { username: "alexander_reed", email: "alexander.reed@example.com", password: "password12345", block: "IH", room: 267 },
+//     { username: "zoe_bailey", email: "zoe.bailey@example.com", password: "password12345", block: "IH", room: 158 },
+//     { username: "daniel_bell", email: "daniel.bell@example.com", password: "password12345", block: "IH", room: 200 },
+//     { username: "victoria_ross", email: "victoria.ross@example.com", password: "password12345", block: "IH", room: 277 },
+//     { username: "jackson_perez", email: "jackson.perez@example.com", password: "password12345", block: "IH", room: 160 }
+//   ];
+  
 
 // async function insertUsers() {
 //     try {
@@ -66,6 +75,8 @@ import { Op } from "sequelize";
 
 
 //Login a student
+
+
 export const loginStudent = asyncHandler(async (req, res, next) => {
     console.log(req.body)
     //Get email and password 
@@ -431,13 +442,32 @@ export const leaveregister=asyncHandler(async(req,res,next)=>{
     return res.status(200)
     .json(new ApiResponse(200,"Entered into register "))
 })
-
+export const updateStatus=asyncHandler(async(req,res)=>{
+    const {username,status}=req.body
+    await User.update({status:status},{where:{username:username}})
+    return res.status(200)
+    .json(new ApiResponse(200,"Updated Status "))
+})
 export const viewAbsentStudents=asyncHandler(async(req,res,next)=>{
     const user=await User.findByPk(req.user.id)
-    const students=await User.findAll({where:{block:user.managedBlock},attributes:['username','email','status']})
+    const students=await User.findAll({where:{block:user.managedBlock,role:"Student"},attributes:['username','email','status','room']})
     return res.status(200)
-    .json(students)
+    .json(new ApiResponse(200,"Students fetched",students))
 })
+
+export const getTodaysLeaveApplications = asyncHandler(async (req, res) => {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split("T")[0];
+
+    // Find all leave applications for today
+    const leaveApplications = await LeaveRegister.findAll({
+        where: { date: today },
+        include: { model: User, attributes: ["username","room", "status"] },
+        order: [["createdAt", "DESC"]],
+    });
+
+    return res.status(200).json(new ApiResponse(200, "Today's Leave Applications Retrieved", leaveApplications));
+});
 
 export const updateRole=asyncHandler(async(req,res,next)=>{
     const {email,role}=req.body
@@ -744,3 +774,81 @@ export const getAdminOverviewUsers = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "User details retrieved", responseData));
 
 });
+
+export const getMessBillSummary=asyncHandler(async(req,res)=>{
+    const totalCollected = await MessBill.sum("total_amount", {
+        where: { status: "Paid" }
+    });
+
+    const totalPending = await MessBill.sum("total_amount", {
+        where: { status: "Pending" }
+    });
+    const responseData={
+        totalCollected,
+        totalPending
+    }
+    return res.status(200).json(new ApiResponse(200,"Summary retrieved",responseData));
+})
+export const getPendingBills=asyncHandler(async(req,res)=>{
+    const pendingBills = await MessBill.findAll({
+        where: { status: "Pending" },
+        include: { model: User, attributes: ["username", "email"] },
+        order: [["year", "DESC"], ["month_number", "DESC"]],
+    });
+
+    return res.status(200).json(new ApiResponse(200,"Pending Bills retrieved",pendingBills));
+})
+
+export const getComplaintsOverview=asyncHandler(async(req,res)=>{
+    const activeComplaintsCount=await Complaint.count({where:{status: {[Op.or]: ['Pending', 'In Progress']}}})
+    const resolvedComplaintsCount=await Complaint.count({where:{status:"Resolved"}})
+    const activeComplaints=await Complaint.findAll({where:{status: {[Op.or]: ['Pending', 'In Progress']}}})
+    const resolvedComplaints=await Complaint.findAll({where:{status:"Resolved"}})
+    const responseData={
+        activeComplaintsCount,
+        activeComplaints,
+        resolvedComplaints,
+        resolvedComplaintsCount
+    }
+
+    return res.status(200).json(new ApiResponse(200,"Complaint Overview retrieved",responseData));
+})
+
+export const getPresentCount=asyncHandler(async(req,res)=>{
+    const count=await User.count({where:{status:"Present"}})
+    return res.status(200).json(new ApiResponse(200,"Count fetched",count))
+})
+export const viewDetails=asyncHandler(async(req,res)=>{
+    const id=req.user.id
+    console.log(id)
+    const details=await User.findByPk(id)
+    console.log(details)
+    return res.status(200).json(new ApiResponse(200,"Details Fetched",details))
+})
+export const attendanceSave=asyncHandler(async(req,res)=>{
+    const date=req.body
+    const ddate="2025-03-31"
+    if(!date){
+        return res.status(400).json(new ApiResponse(400,"Please enter date"))
+    }
+    const records=await User.findAll();
+    for (let record of records) {
+        await Attendance.create({
+          studentId: record.id,
+          date: date,
+          status: record.status, // "Present" or "Absent"
+        });
+      }
+    return res.status(200).json(new ApiResponse(200,"Data Saved"))
+})
+export const attendanceFetch=asyncHandler(async(req,res)=>{
+    const {date}=req.body
+
+    if(!date){
+        return res.status(400).json(new ApiResponse(400,"Please enter date"))
+    }
+    const record=await Attendance.findAll({where:{date:date},include:{model:User,attributes:["username","room"]}})
+
+    return res.status(200).json(new ApiResponse(200, "Attendance Fetched",record))
+    
+})

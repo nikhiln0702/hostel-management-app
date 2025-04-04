@@ -10,32 +10,34 @@ class AttendanceScreen extends StatefulWidget {
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  // Use dynamic type for students
   List<Map<String, dynamic>> students = [];
   List<Map<String, dynamic>> filteredStudents = [];
-  String currentDate = ''; // Variable to hold the formatted current date
-  String filter = 'All'; // Default filter is 'All'
+  List<Map<String, dynamic>> appliedstudents = [];
+
+  String currentDate = '';
+  String filter = 'All';
+  int presentCount = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchStudents(); // Fetch students when screen is loaded
-    _setCurrentDate(); // Set current date when screen is loaded
+    _fetchStudents();
+    _setCurrentDate();
+    _fetchPresentCount();
+    _fetchAppliedStudents();
   }
 
-  // ✅ Set current date
   void _setCurrentDate() {
-    final DateFormat dateFormatter = DateFormat('dd-MM-yyyy'); // Set the format you want
+    final DateFormat dateFormatter = DateFormat('dd-MM-yyyy');
     setState(() {
-      currentDate = dateFormatter.format(DateTime.now()); // Get and format the current date
+      currentDate = dateFormatter.format(DateTime.now());
     });
-    print("Current Date: $currentDate"); // Debug: Print current date to ensure it's set
+    print("Current Date: $currentDate");
   }
 
-  // ✅ Fetch students data from the backend
   Future<void> _fetchStudents() async {
     try {
-      // Get the stored access token from SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
 
@@ -44,28 +46,26 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         return;
       }
 
-      // Make the API request with the Bearer token in the header
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/viewstudents'),  // Replace with actual endpoint
+        Uri.parse('http://192.168.34.182:7000/api/v1/viewstudents'),
         headers: {
-          'Authorization': 'Bearer $accessToken', // Include Bearer token in header
+          'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
         },
       );
-
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
-        final List<dynamic> studentsData = responseBody;
+        final List<dynamic> studentsData = responseBody['data'];
 
         setState(() {
           students = studentsData.map((student) {
             return {
               'name': student['username'] ?? 'Unknown',
-              'roomNo': student['email'] ?? 'Unknown',
-              'status': student['status'], // Initialize status field
+              'roomNo': student['room'] ?? 'Unknown',
+              'status': student['status'],
             };
           }).toList();
-          _filterStudents(); // Filter students based on current filter
+          _filterStudents();
         });
       } else {
         showErrorDialog(context, "Failed to fetch students. Please try again.");
@@ -75,10 +75,159 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  // ✅ Filter students based on the selected filter
+  Future<void> _fetchPresentCount() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? accessToken = prefs.getString('accessToken');
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.34.182:7000/api/v1/getpresentcount'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          presentCount = data['data'];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchAttendance() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? accessToken = prefs.getString('accessToken');
+
+      if (accessToken == null) {
+        showErrorDialog(context, "Access token is missing. Please log in again.");
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('http://192.168.34.182:7000/api/v1/attendancefetch'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'date': currentDate}),
+      );
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        final List<dynamic> studentsData = responseBody['data'];
+
+        setState(() {
+          students = studentsData.map((student) {
+            return {
+              'name': student['username'] ?? 'Unknown',
+              'roomNo': student['room'] ?? 'Unknown',
+              'status': student['status'],
+            };
+          }).toList();
+          _filterStudents();
+        });
+      } else {
+        showErrorDialog(context, "Failed to fetch students. Please try again.");
+      }
+    } catch (e) {
+      showErrorDialog(context, "An error occurred: $e");
+    }
+  }
+
+  Future<void> _saveAttendance() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? accessToken = prefs.getString('accessToken');
+
+      if (accessToken == null) {
+        showErrorDialog(context, "Access token is missing. Please log in again.");
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('http://192.168.34.182:7000/api/v1/attendancesave'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'date': currentDate,
+        }),
+      );
+      if (response.statusCode == 200) {
+        // Show success green bar (SnackBar) here
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Attendance saved successfully!', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        showErrorDialog(context, "Save failed");
+      }
+    } catch (e) {
+      showErrorDialog(context, "An error occurred: $e");
+    }
+  }
+
+  Future<void> _fetchAppliedStudents() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? accessToken = prefs.getString('accessToken');
+
+      if (accessToken == null) {
+        showErrorDialog(context, "Access token is missing. Please log in again.");
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('http://192.168.34.182:7000/api/v1/gettodaysapplied'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        final List<dynamic> studentsData = responseBody['data'];
+
+        setState(() {
+          appliedstudents = studentsData.map((student) {
+            var user = student['User'];
+            return {
+              'name': user['username'] ?? 'Unknown',
+              'roomNo': user['room'] ?? 'Unknown',
+              'status': user['status'],
+            };
+          }).toList();
+          _filterStudents();
+        });
+      } else {
+        showErrorDialog(context, "Failed to fetch students. Please try again.");
+      }
+    } catch (e) {
+      showErrorDialog(context, "An error occurred: $e");
+    }
+  }
+
   void _filterStudents() {
     if (filter == 'All') {
       filteredStudents = students;
+    } else if (filter == 'Applied') {
+      filteredStudents = appliedstudents;
     } else {
       filteredStudents = students.where((student) {
         return student['status'] == filter;
@@ -86,7 +235,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  // Error dialog helper method
   void showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
@@ -125,42 +273,53 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         ),
         child: Column(
           children: [
-            // Display the current date above the filter buttons
             Text(
               'Date: $currentDate',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+            ),
+            SizedBox(height: 10),
+            Text(
+              _isLoading ? "Total Present: Loading..." : "Total Present: $presentCount",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
+            ),
+            SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _filterButton("All"),
+                  _filterButton("Present"),
+                  _filterButton("Absent"),
+                  _filterButton("Applied"),
+                ],
               ),
             ),
-            SizedBox(height: 10), // Space between date and filter buttons
-
-            // Filter buttons for All, Present, Absent
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _filterButton("All"),
-                _filterButton("Present"),
-                _filterButton("Absent"),
-              ],
-            ),
-            SizedBox(height: 10), // Space between filter buttons and cards
-
-            _buildCards(), // Display the student cards based on filtered list
+            SizedBox(height: 10),
+            _buildCards(),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.all(20),
+        child: ElevatedButton(
+          onPressed: _saveAttendance,
+          child: Text("Save Attendance"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            padding: EdgeInsets.symmetric(vertical: 15),
+          ),
         ),
       ),
     );
   }
 
-  // ✅ Filter button widget
   Widget _filterButton(String label) {
     return ElevatedButton(
       onPressed: () {
         setState(() {
           filter = label;
-          _filterStudents(); // Filter the students when a button is pressed
+          _filterStudents();
         });
       },
       style: ElevatedButton.styleFrom(
@@ -170,7 +329,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  // ✅ Build Cards for each student
   Widget _buildCards() {
     return Expanded(
       child: ListView.builder(
@@ -183,7 +341,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  // ✅ Build individual student card
   Widget _buildStudentCard(Map<String, dynamic> student) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 10),
@@ -194,22 +351,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Student Name
-            Text(
-              'Name: ${student['name']}',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Text('Name: ${student['name']}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 5),
-            // Room No
-            Text(
-              'Room No: ${student['roomNo']}',
-              style: TextStyle(fontSize: 14),
-            ),
+            Text('Room No: ${student['roomNo']}', style: TextStyle(fontSize: 14)),
             SizedBox(height: 10),
-            // Present/Absent Dropdown
             _dropdownCell(student),
             SizedBox(height: 10),
-            // Status (Green for Present, Red for Absent)
             _statusCell(student['status']),
           ],
         ),
@@ -217,41 +364,28 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  // ✅ Dropdown for Present/Absent
   Widget _dropdownCell(Map<String, dynamic> student) {
-    String currentStatus = student["status"] ?? 'Absent';  // Default to 'Absent' if null
-
+    String currentStatus = student["status"] ?? 'Absent';
     return DropdownButton<String>(
-      value: currentStatus,  // Set the value from the student['status']
-      hint: Text("Present/Absent"),  // Placeholder text
-      isExpanded: true,
-      items: ["Present", "Absent"].map((String value) {
+      value: currentStatus,
+      onChanged: (newValue) {
+        setState(() {
+          student["status"] = newValue!;
+        });
+      },
+      items: <String>['Present', 'Absent', 'Leave'].map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
         );
       }).toList(),
-      onChanged: (newValue) {
-        setState(() {
-          student["status"] = newValue!;  // Update the student's status on change
-          _filterStudents(); // Re-filter the list to update based on the selected status
-        });
-      },
     );
   }
 
-  // ✅ Status Cell (Green for Present, Red for Absent)
-  Widget _statusCell(String? status) {
-    bool isPresent = status == "Present";
-
+  Widget _statusCell(String status) {
     return Text(
-      status?.isEmpty ?? true ? "" : (isPresent ? "Present" : "Absent"),
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 14,
-        color: status?.isEmpty ?? true ? Colors.black : (isPresent ? Colors.green : Colors.red),
-        fontWeight: FontWeight.bold,
-      ),
+      'Status: $status',
+      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: status == 'Present' ? Colors.green : Colors.red),
     );
   }
 }

@@ -44,7 +44,7 @@ class _LeaveRegisterState extends State<LeaveRegister> {
     // Replace with your backend URL
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.5:7000/api/v1/leaveregister'),
+        Uri.parse('http://192.168.34.182:7000/api/v1/leaveregister'),
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',
@@ -81,7 +81,11 @@ class _LeaveRegisterState extends State<LeaveRegister> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Leave application successful!")));
-      } else {
+      } 
+      else if(response.statusCode==404){
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error : No Exit Record Found")));
+      }
+      else {
         // Handle the error response
         print('response :${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${response.body}")));
@@ -96,7 +100,7 @@ class _LeaveRegisterState extends State<LeaveRegister> {
     String? refreshToken = prefs.getString('refreshToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.1.5:7000/api/v1/refreshtoken'),
+      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
       headers: {
         'Authorization': 'Bearer $refreshToken',
       },

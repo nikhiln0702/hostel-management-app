@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
-import 'student_mess_bill.dart'; // ✅ Import Mess Bill Page
-import 'student_transaction.dart'; // ✅ Import Transactions Page
 import 'user_profile.dart';
 import 'admin_useroverview.dart';
 import 'warden_fees.dart';
+import 'admin_billoverview.dart';
+import 'admin_complaintoverview.dart';
+import 'admin_attendanceoverview.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -149,7 +150,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessBillPage()),
+                    MaterialPageRoute(builder: (context) => AdminBillOverviewPage()),
                   );
                 },
                 child: Container(
@@ -181,7 +182,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => TransactionPage()),
+                    MaterialPageRoute(builder: (context) => ComplaintsOverviewPage()),
                   );
                 },
                 child: Container(
@@ -245,7 +246,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => TransactionPage()),
+                    MaterialPageRoute(builder: (context) => AttendanceScreen()),
                   );
                 },
                 child: Container(

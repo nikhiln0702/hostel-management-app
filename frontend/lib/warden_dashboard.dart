@@ -5,6 +5,7 @@ import 'warden_attendance.dart';
 import 'warden_complaint.dart';
 import 'warden_notes.dart';
 import 'user_profile.dart';
+import 'warden_attendance_history.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Warden Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: const Color.fromARGB(255, 119, 84, 180),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications, color: Colors.white),
@@ -47,14 +48,15 @@ class _HomeScreenState extends State<HomeScreen> {
         automaticallyImplyLeading: false
       ),
       body: Container(
-        padding: EdgeInsets.symmetric(vertical: 30, horizontal: 15),
+        // Gradient added here
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.purple.shade300, Colors.deepPurple.shade700],
+            colors: [Colors.white, const Color.fromARGB(255, 187, 113, 233)],
           ),
         ),
+        padding: EdgeInsets.symmetric(vertical: 30, horizontal: 15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -63,24 +65,17 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 18, color: Colors.white),
             ),
             Text(
-              username, // Display the user's name here
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
+                    'Hello,\n$username', // Display the username here
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                  ),
             SizedBox(height: 20),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 15,
-                crossAxisSpacing: 15,
-                childAspectRatio: 1.3,
-                children: [
-                  _buildOptionCard(context, "Mess Bill Details", Icons.receipt, MessBillPage()),
-                  _buildOptionCard(context, "Attendance", Icons.check_circle, AttendanceScreen()),
-                  _buildOptionCard(context, "Complaints", Icons.report_problem, ComplaintsScreen()),
-                  _buildOptionCard(context, "Warden Notes", Icons.note, WardenNotesScreen()),
-                ],
-              ),
-            ),
+
+            // The individual option containers (instead of GridView)
+            _buildOptionCard(context, "Mess Bill Details", Icons.receipt, MessBillPage()),
+            _buildOptionCard(context, "Attendance", Icons.check_circle, AttendanceScreen()),
+            _buildOptionCard(context, "Attendance History", Icons.history, AttendanceHistoryScreen()), // New History Card
+            _buildOptionCard(context, "Complaints", Icons.report_problem, ComplaintsScreen()),
+            // _buildOptionCard(context, "Warden Notes", Icons.note, WardenNotesScreen()),
           ],
         ),
       ),
@@ -111,6 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // A widget to build individual option cards
   Widget _buildOptionCard(BuildContext context, String title, IconData icon, Widget screen) {
     return GestureDetector(
       onTap: () {
@@ -120,24 +116,23 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
       child: Container(
+        margin: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 8, spreadRadius: 2),
-          ],
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
         ),
-        alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(vertical: 15),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
-            Icon(icon, size: 36, color: Colors.deepPurple),
-            SizedBox(height: 8),
+            Icon(icon, color: Colors.deepPurple, size: 40),
+            SizedBox(width: 10),
             Text(
               title,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

@@ -69,7 +69,7 @@ class _WardenLoginState extends State<WardenLogin> {
           // Background Image with Gradient Overlay
           Positioned.fill(
             child: Image.asset(
-              "assets/hostel.jpg.webp",
+              "assets/hostel.jpg",
               fit: BoxFit.cover,
             ),
           ),

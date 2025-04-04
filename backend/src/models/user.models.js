@@ -60,6 +60,9 @@ const User = sequelize.define("User", {
     managedBlock: {
         type: DataTypes.STRING,
         allowNull: true // Null if not a warden
+    },
+    room: {
+        type:DataTypes.INTEGER
     }
 
 },
@@ -87,7 +90,7 @@ User.prototype.generateAccessToken = function () {
         return jwt.sign(
             { email: this.email,id:this.id },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn:  "30m" }
+            { expiresIn:  "50m" }
         )
     } catch (error) {
         throw Error(error)

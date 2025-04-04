@@ -243,7 +243,7 @@ class _MessBillPageState extends State<MessBillPage> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Total Amount: ₹${bill['totalAmount']}"),
+                            Text("Total Amount: ₹${bill['totalAmount'].toStringAsFixed(2)}"),
                             Text("Payment Status: ${bill['paymentStatus']}"),
                           ],
                         ),

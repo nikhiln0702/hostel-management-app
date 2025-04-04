@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           // Background Image
           Positioned.fill(
-            child: Image.asset("assets/hostel.jpg.webp", fit: BoxFit.cover),
+            child: Image.asset("assets/hostel.jpg", fit: BoxFit.cover),
           ),
 
           // Centered Login Form

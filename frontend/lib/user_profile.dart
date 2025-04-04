@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'frontpage.dart';
 import 'package:http/http.dart' as http;
+import 'view_details.dart';
 
 class UserProfilePage extends StatefulWidget {
   @override
@@ -75,22 +76,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   // Placeholder function for viewing profile
   void _viewProfile() {
-    // This can navigate to a profile viewing/editing screen
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("My Profile"),
-        content: Text("This is a placeholder for the Profile screen."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-            },
-            child: Text("OK"),
-          ),
-        ],
-      ),
-    );
+    Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => ViewProfilePage()),
+  );
   }
 
   @override

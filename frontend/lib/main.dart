@@ -6,6 +6,8 @@ import 'student_dashboard.dart';
 import 'warden_login.dart';
 import 'admin_login.dart';
 import 'admin_dashboard.dart';
+import 'admin_activecomplaints.dart';
+import 'admin_resolvedcomplaints.dart';
 
 void main() {
   runApp(MyApp());
@@ -26,7 +28,9 @@ class MyApp extends StatelessWidget {
         '/wardenLogin': (context) => WardenLogin(),
         '/wardendashboard':(context)=> HomeScreen(),
         '/adminlogin':(context)=> AdminLogin(),
-        '/admindashboard':(context)=>AdminDashboard()
+        '/admindashboard':(context)=>AdminDashboard(),
+        '/active_complaints':(context)=>ActiveComplaintsPage(),
+        '/resolved_complaints':(context)=>ResolvedComplaintsPage()
       },
     );
   }

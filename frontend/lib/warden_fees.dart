@@ -59,63 +59,65 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
   }
 
   Future<void> saveChanges() async {
-  if (selectedMonth == null || selectedYear == null || mpd == null || ksw == null || elec == null) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text("Please fill all fields!"),
-      backgroundColor: Colors.red,
-    ));
-    return;
+    if (selectedMonth == null || selectedYear == null || mpd == null || ksw == null || elec == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Please fill all fields!"),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    // Construct the request body for the API
+    final requestBody = {
+      'month': selectedMonth,
+      'year': selectedYear,
+      'mpd_rate': mpd ?? 0.0,
+      'ksw_charges': ksw ?? 0.0,
+      'electricity_charges': elec ?? 0.0,
+      'est': est ?? 0.0,
+      'month_number': months.indexOf(selectedMonth!) + 1,  // Month number (1 for January, 2 for February, etc.)
+    };
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? accessToken = prefs.getString('accessToken');
+
+    if (accessToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("No access token found! Please log in again."),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    // Send data to backend API
+   try{ final response = await http.post(
+      Uri.parse('http://192.168.34.182:7000/api/v1/publishmessbill'),  // Replace with your API endpoint
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: json.encode(requestBody),
+    );
+
+    // Debugging: Print the response status code and body
+    print('Response Status: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Data saved successfully for $selectedMonth $selectedYear!"),
+        backgroundColor: Colors.green,
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Error saving data! Please try again."),
+        backgroundColor: Colors.red,
+      ));
+    }}
+    catch(e){
+      print(e);
+    }
   }
-
-  // Construct the request body for the API
-  final requestBody = {
-    'month': selectedMonth,
-    'year': selectedYear,
-    'mpd_rate': mpd ?? 0.0,
-    'ksw_charges': ksw ?? 0.0,
-    'electricity_charges': elec ?? 0.0,
-    'est': est ?? 0.0,
-    'month_number': months.indexOf(selectedMonth!) + 1,  // Month number (1 for January, 2 for February, etc.)
-  };
-  
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? accessToken = prefs.getString('accessToken');
-  
-  if (accessToken == null) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text("No access token found! Please log in again."),
-      backgroundColor: Colors.red,
-    ));
-    return;
-  }
-
-  // Send data to backend API
-  final response = await http.post(
-    Uri.parse('http://192.168.1.5:7000/api/v1/publishmessbill'),  // Replace with your API endpoint
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $accessToken',
-    },
-    body: json.encode(requestBody),
-  );
-
-  // Debugging: Print the response status code and body
-  print('Response Status: ${response.statusCode}');
-  print('Response Body: ${response.body}');
-
-  if (response.statusCode == 201) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text("Data saved successfully for $selectedMonth $selectedYear!"),
-      backgroundColor: Colors.green,
-    ));
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text("Error saving data! Please try again."),
-      backgroundColor: Colors.red,
-    ));
-  }
-}
-
 
   Future<void> loadPreviousData() async {
     if (selectedMonth == null || selectedYear == null) return;
@@ -145,7 +147,8 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
         title: Text("Update Monthly Fees"),
         backgroundColor: Colors.deepPurple,
       ),
-      body: Container(
+      body: SingleChildScrollView(
+        child:Container(
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -175,31 +178,11 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
                 })),
               ],
             ),
-            SizedBox(height: 15),
-
-            _buildTextField("MPD", mpdController),
-            _buildTextField("KSW", kswController),
-            _buildTextField("EST", estController),
-            _buildTextField("ELEC", elecController),
-
-            SizedBox(height: 15),
-            Container(
-              padding: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  _buildValueRow("KSW", ksw),
-                  _buildValueRow("EST", est),
-                  _buildValueRow("ELEC", elec),
-                  Divider(color: Colors.white54, thickness: 1),
-                  _buildValueRow("Other fees", totalAmount, bold: true),
-                ],
-              ),
-            ),
-
+            SizedBox(height: 20),
+            _buildTextField("MPD Rate", mpdController),
+            _buildTextField("KSW Charges", kswController),
+            _buildTextField("Estimation Charges", estController),
+            _buildTextField("Electricity Charges", elecController),
             SizedBox(height: 20),
             Center(
               child: ElevatedButton(
@@ -213,6 +196,7 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

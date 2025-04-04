@@ -219,7 +219,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                       });
                     }
                   },
-                  child: Text("Update Status"),
+                  child: Text("Update Status",style: TextStyle(color: Colors.white),),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
                 ),
               ],
