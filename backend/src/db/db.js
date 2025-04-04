@@ -6,7 +6,7 @@ import { Sequelize } from "sequelize";
 
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
     host: process.env.DB_HOST,
-    port:3306,
+    port:25454,
     dialect: "mysql",
     logging :false // Logs SQL queries to the console
 
@@ -28,7 +28,7 @@ const connectDB= async()=>{
 const syncDB=async()=>{
     console.log("Registered models:", sequelize.models);
 
-    await sequelize.sync({ alter:false }).then(() => {
+    await sequelize.sync({ alter:true }).then(() => {
         console.log("Table sync complete");
     }).catch(err => {
         console.error("Error syncing table:", err);
