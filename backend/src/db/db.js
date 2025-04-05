@@ -28,7 +28,7 @@ const connectDB= async()=>{
 const syncDB=async()=>{
     console.log("Registered models:", sequelize.models);
 
-    await sequelize.sync({ alter:true }).then(() => {
+    await sequelize.sync({ alter:false}).then(() => {
         console.log("Table sync complete");
     }).catch(err => {
         console.error("Error syncing table:", err);

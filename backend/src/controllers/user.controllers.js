@@ -20,59 +20,59 @@ import { Attendance } from "../models/attendance.models.js";
 
 //testing 
 
-const sampleUsers = [
-    { username: "Sajin Satheesh Kumar", email: "sajinsk.csb2226@saintgits.org", password: "password12345", block: "IH", room: 273 },
-    { username: "Nikhil N Nair", email: "nikhilnn.csb2226@saintgits.org", password: "password12345", block: "IH", room: 180 },
-    { username: "Sayand K", email: "sayandk@example.com", password: "password12345", block: "IH", room: 298 },
-    { username: "Muhammad Afran", email: "mafran@example.com", password: "password12345", block: "IH", room: 147 },
-    { username: "Muhammed Anees", email: "manees@example.com", password: "password12345", block: "IH", room: 189 },
-    { username: "Navaneeth Vishnu K", email: "nvk@example.com", password: "password12345", block: "IH", room: 256 },
-    { username: "Nevin K Mathew", email: "nevinkm@example.com", password: "password12345", block: "IH", room: 305 },
-    { username: "Japheth Santhosh", email: "japheths@example.com", password: "password12345", block: "IH", room: 134 },
-    { username: "Joel Mathew KA", email: "joel@example.com", password: "password12345", block: "IH", room: 276 },
-    { username: "Rohith John Jacob", email: "rohithjj@example.com", password: "password12345", block: "IH", room: 222 },
-    { username: "Rohan Joseph Jossy", email: "rohanjj@example.com", password: "password12345", block: "IH", room: 143 },
-    { username: "Sojin M A", email: "sojinma@example.com", password: "password12345", block: "IH", room: 211 },
-    { username: "Razeen", email: "razeen@example.com", password: "password12345", block: "IH", room: 260 },
-    { username: "Siddharth P V", email: "siddharthpv@example.com", password: "password12345", block: "IH", room: 299 },
-    { username: "Vishnu Sunil Kumar", email: "vishnusk@example.com", password: "password12345", block: "IH", room: 223 },
-    { username: "Sharlet", email: "sharlet@example.com", password: "password12345", block: "IH", room: 166 },
-    { username: "Jeevan Jiji Thomas", email: "jeevanjt@example.com", password: "password12345", block: "IH", room: 289 },
-    { username: "Aswin R P", email: "aswinrp@example.com", password: "password12345", block: "IH", room: 174 },
-    { username: "Bijoy Mathew", email: "bijoym@example.com", password: "password12345", block: "IH", room: 258 },
-    { username: "Abhijith Suresh", email: "abhijiths@example.com", password: "password12345", block: "IH", room: 132 },
-    { username: "Akhil C", email: "akhilc@example.com", password: "password12345", block: "IH", room: 266 },
-    { username: "Abin Roy", email: "abinr@example.com", password: "password12345", block: "IH", room: 219 },
-    { username: "Alvin Paul", email: "alvinp@example.com", password: "password12345", block: "IH", room: 194 },
-    { username: "Jamie J", email: "jamiej@example.com", password: "password12345", block: "IH", room: 267 },
-    { username: "Adithyan Arun", email: "adithyana@example.com", password: "password12345", block: "IH", room: 158 },
-    { username: "Alok Sajith", email: "aloks@example.com", password: "password12345", block: "IH", room: 200 },
-    { username: "Adarsh Prasad", email: "adarshp@example.com", password: "password12345", block: "IH", room: 277 },
-    { username: "Rashiq Kareem", email: "rashiqk@example.com", password: "password12345", block: "IH", room: 160 },
-    { username: "Ajay V Chacko", email: "ajayvc@example.com", password: "password12345", block: "IH", room: 200,role:"Warden" },
-    { username: "George Punnoose", email: "georgep@example.com", password: "password12345", block: "IH", room: 221 , role:"Admin"},
-    { username: "admin", email: "admin@example.com", password: "password12345", block: "IH", room: 223 , role:"Admin"}
-  ];
+// const sampleUsers = [
+//     { username: "Sajin Satheesh Kumar", email: "sajinsk.csb2226@saintgits.org", password: "password12345", block: "IH", room: 273 },
+//     { username: "Nikhil N Nair", email: "nikhilnn.csb2226@saintgits.org", password: "password12345", block: "IH", room: 180 },
+//     { username: "Sayand K", email: "sayandk@example.com", password: "password12345", block: "IH", room: 298 },
+//     { username: "Muhammad Afran", email: "mafran@example.com", password: "password12345", block: "IH", room: 147 },
+//     { username: "Muhammed Anees", email: "manees@example.com", password: "password12345", block: "IH", room: 189 },
+//     { username: "Navaneeth Vishnu K", email: "nvk@example.com", password: "password12345", block: "IH", room: 256 },
+//     { username: "Nevin K Mathew", email: "nevinkm@example.com", password: "password12345", block: "IH", room: 305 },
+//     { username: "Japheth Santhosh", email: "japheths@example.com", password: "password12345", block: "IH", room: 134 },
+//     { username: "Joel Mathew KA", email: "joel@example.com", password: "password12345", block: "IH", room: 276 },
+//     { username: "Rohith John Jacob", email: "rohithjj@example.com", password: "password12345", block: "IH", room: 222 },
+//     { username: "Rohan Joseph Jossy", email: "rohanjj@example.com", password: "password12345", block: "IH", room: 143 },
+//     { username: "Sojin M A", email: "sojinma@example.com", password: "password12345", block: "IH", room: 211 },
+//     { username: "Razeen", email: "razeen@example.com", password: "password12345", block: "IH", room: 260 },
+//     { username: "Siddharth P V", email: "siddharthpv@example.com", password: "password12345", block: "IH", room: 299 },
+//     { username: "Vishnu Sunil Kumar", email: "vishnusk@example.com", password: "password12345", block: "IH", room: 223 },
+//     { username: "Sharlet", email: "sharlet@example.com", password: "password12345", block: "IH", room: 166 },
+//     { username: "Jeevan Jiji Thomas", email: "jeevanjt@example.com", password: "password12345", block: "IH", room: 289 },
+//     { username: "Aswin R P", email: "aswinrp@example.com", password: "password12345", block: "IH", room: 174 },
+//     { username: "Bijoy Mathew", email: "bijoym@example.com", password: "password12345", block: "IH", room: 258 },
+//     { username: "Abhijith Suresh", email: "abhijiths@example.com", password: "password12345", block: "IH", room: 132 },
+//     { username: "Akhil C", email: "akhilc@example.com", password: "password12345", block: "IH", room: 266 },
+//     { username: "Abin Roy", email: "abinr@example.com", password: "password12345", block: "IH", room: 219 },
+//     { username: "Alvin Paul", email: "alvinp@example.com", password: "password12345", block: "IH", room: 194 },
+//     { username: "Jamie J", email: "jamiej@example.com", password: "password12345", block: "IH", room: 267 },
+//     { username: "Adithyan Arun", email: "adithyana@example.com", password: "password12345", block: "IH", room: 158 },
+//     { username: "Alok Sajith", email: "aloks@example.com", password: "password12345", block: "IH", room: 200 },
+//     { username: "Adarsh Prasad", email: "adarshp@example.com", password: "password12345", block: "IH", room: 277 },
+//     { username: "Rashiq Kareem", email: "rashiqk@example.com", password: "password12345", block: "IH", room: 160 },
+//     { username: "Ajay V Chacko", email: "ajayvc@example.com", password: "password12345", block: "IH", room: 200,role:"Warden" },
+//     { username: "George Punnoose", email: "georgep@example.com", password: "password12345", block: "IH", room: 221 , role:"Admin"},
+//     { username: "admin", email: "admin@example.com", password: "password12345", block: "IH", room: 223 , role:"Admin"}
+//   ];
   
 
-async function insertUsers() {
-    try {
-      // Loop through sampleUsers and hash passwords before creating them
-      const usersWithHashedPasswords = await Promise.all(sampleUsers.map(async (user) => {
-        const hashedPassword = await bcrypt.hash(user.password, 10);
-        return { ...user, password: hashedPassword };
-      }));
+// async function insertUsers() {
+//     try {
+//       // Loop through sampleUsers and hash passwords before creating them
+//       const usersWithHashedPasswords = await Promise.all(sampleUsers.map(async (user) => {
+//         const hashedPassword = await bcrypt.hash(user.password, 10);
+//         return { ...user, password: hashedPassword };
+//       }));
 
-      // Perform bulkCreate with validation enabled
-      await User.bulkCreate(usersWithHashedPasswords, { validate: true });
-      console.log('Users have been inserted successfully');
-    } catch (error) {
-      console.error('Error inserting users:', error);
-    }
-  }
+//       // Perform bulkCreate with validation enabled
+//       await User.bulkCreate(usersWithHashedPasswords, { validate: true });
+//       console.log('Users have been inserted successfully');
+//     } catch (error) {
+//       console.error('Error inserting users:', error);
+//     }
+//   }
 
 
-  insertUsers();
+//   insertUsers();
 
 
 
