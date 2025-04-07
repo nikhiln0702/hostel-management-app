@@ -16,24 +16,15 @@ cron.schedule("30 18 * * *", async () => {
 
       
       for (const user of absentUsers) {
-        if (user.totalAbsentDays >= 5)
-        {
-          flag=1
-        }
-        // Increment totalAbsentDays
         user.totalAbsentDays += 1;
-        if(flag==1)
-          {
-            user.totalPresentDays -= 1;
-          }
-  
-        // If the user has been absent for 5 consecutive days, reduce from days_present
-        if ((user.totalAbsentDays >= 5) && (flag==0)) {
-          user.totalPresentDays = Math.max(0, user.totalPresentDays - 5);
-          // user.totalAbsentDays = 0; // Reset count after deduction
-          flag=1
-        }
-        await user.save();
+
+  if (user.totalAbsentDays === 5) {
+    user.totalPresentDays = Math.max(0, user.totalPresentDays - 5);
+  } else if (user.totalAbsentDays > 5) {
+    user.totalPresentDays = Math.max(0, user.totalPresentDays - 1);
+  }
+
+  await user.save();
       }
   
       console.log("Absence check completed.");
