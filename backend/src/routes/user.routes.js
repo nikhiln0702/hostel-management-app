@@ -1,11 +1,11 @@
 import { Router} from "express";
 import { loginStudent ,loginWarden ,loginAdmin,logout ,changePassword, forgotPassword,verifyOTP,resetPassword,refreshToken,leaveregister,viewAbsentStudents ,updateRole,addComplaint,getComplaints,updateComplaintStatus,updateStatus} from "../controllers/user.controllers.js";
 import { publishMessBill,viewMyBills,viewBills,createOrder,verifyPayment,getTransactionHistory,viewMyComplaints,getAdminOverviewUsers,getMessBillSummary,getPendingBills,getComplaintsOverview,getPresentCount,viewDetails,getTodaysLeaveApplications} from "../controllers/user.controllers.js";
-import { attendanceFetch,attendanceSave } from "../controllers/user.controllers.js";
+import { attendanceFetch,attendanceSave ,runDailyAbsenceLogic} from "../controllers/user.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { verifyRole } from "../middlewares/authrole.middleware.js";
 import { changePasswordLimiter } from "../middlewares/ratelimiter.middleware.js";
-import {cronJobs} from "../../scripts";
+
 
 const router = Router();
 
@@ -43,7 +43,7 @@ router.route("/gettodaysapplied").post(verifyJWT,verifyRole(["Warden","Admin"]),
 router.route("/updatestatus").post(verifyJWT,verifyRole(["Warden","Admin"]),updateStatus)
 router.route("/attendancesave").post(verifyJWT,verifyRole(["Warden","Admin"]),attendanceSave)
 router.route("/attendancefetch").post(verifyJWT,verifyRole(["Warden","Admin"]),attendanceFetch)
-router.route("/cronjobs").get(cronJobs);
+router.route("/cronjobs").get(runDailyAbsenceLogic);
 
 
 

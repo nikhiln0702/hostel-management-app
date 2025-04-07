@@ -1,7 +1,7 @@
 import { app } from './app.js';
 import dotenv from 'dotenv';
 import { connectDB, syncDB } from './db/db.js';
-import "../scripts/cronJobs.js"; // Cron jobs file
+// import "../scripts/cronJobs.js"; // Cron jobs file
 import { MessBill } from './models/messbill.models.js';
 import { User } from './models/user.models.js';
 import { Transaction } from './models/transaction.models.js';
