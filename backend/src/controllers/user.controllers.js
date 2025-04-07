@@ -460,11 +460,11 @@ export const viewAbsentStudents=asyncHandler(async(req,res,next)=>{
 
 export const getTodaysLeaveApplications = asyncHandler(async (req, res) => {
     // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split("T")[0];
+    const date=req.body;
 
     // Find all leave applications for today
     const leaveApplications = await LeaveRegister.findAll({
-        where: { date: today },
+        where: { date: date },
         include: { model: User, attributes: ["username","room", "status"] },
         order: [["createdAt", "DESC"]],
     });

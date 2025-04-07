@@ -202,13 +202,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         showErrorDialog(context, "Access token is missing. Please log in again.");
         return;
       }
-
-      final response = await http.get(
+      String date='';
+      final response = await http.post(
         Uri.parse('$baseUrl/gettodaysapplied'),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
         },
+        body:json.encode({date:currentDate}),
       );
       print(response.body);
       if (response.statusCode == 200) {

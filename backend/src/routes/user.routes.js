@@ -39,7 +39,7 @@ router.route("/getpendingbills").get(verifyJWT,verifyRole(["Admin"]),getPendingB
 router.route("/getcomplaintsoverview").get(verifyJWT,verifyRole(["Admin"]),getComplaintsOverview)
 router.route("/getpresentcount").get(verifyJWT,verifyRole(["Admin","Warden"]),getPresentCount)
 router.route("/viewdetails").get(verifyJWT,verifyRole(["Warden","Admin","Student"]),viewDetails)
-router.route("/gettodaysapplied").get(verifyJWT,verifyRole(["Warden","Admin"]),getTodaysLeaveApplications)
+router.route("/gettodaysapplied").post(verifyJWT,verifyRole(["Warden","Admin"]),getTodaysLeaveApplications)
 router.route("/updatestatus").post(verifyJWT,verifyRole(["Warden","Admin"]),updateStatus)
 router.route("/attendancesave").post(verifyJWT,verifyRole(["Warden","Admin"]),attendanceSave)
 router.route("/attendancefetch").post(verifyJWT,verifyRole(["Warden","Admin"]),attendanceFetch)
