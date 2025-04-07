@@ -5,7 +5,7 @@ import { attendanceFetch,attendanceSave } from "../controllers/user.controllers.
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { verifyRole } from "../middlewares/authrole.middleware.js";
 import { changePasswordLimiter } from "../middlewares/ratelimiter.middleware.js";
-
+import {cronJobs} from "../../scripts";
 
 const router = Router();
 
@@ -43,7 +43,7 @@ router.route("/gettodaysapplied").post(verifyJWT,verifyRole(["Warden","Admin"]),
 router.route("/updatestatus").post(verifyJWT,verifyRole(["Warden","Admin"]),updateStatus)
 router.route("/attendancesave").post(verifyJWT,verifyRole(["Warden","Admin"]),attendanceSave)
 router.route("/attendancefetch").post(verifyJWT,verifyRole(["Warden","Admin"]),attendanceFetch)
-
+router.route("/cronjobs").get(cronJobs);
 
 
 

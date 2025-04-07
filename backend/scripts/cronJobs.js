@@ -5,7 +5,7 @@ console.log("Cron jobs loaded")
 
 //  Runs every minute for testing
 cron.schedule("30 18 * * *", async () => {
-    console.log("Running daily absence check...");
+    // console.log("Running daily absence check...");
   
     try {
       let flag=0
