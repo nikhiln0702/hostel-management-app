@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class ViewProfilePage extends StatefulWidget {
@@ -22,11 +23,13 @@ class _ViewProfilePageState extends State<ViewProfilePage> {
 
   // Load user profile from SharedPreferences
   Future<void> _loadUserProfile() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
     try{
     final response = await http.get(
-      Uri.parse('http://192.168.34.182:7000/api/v1/viewdetails'),
+      Uri.parse('$baseUrl/viewdetails'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',

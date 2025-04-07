@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ComplaintDetailScreen extends StatefulWidget {
   final String complaintText;
@@ -30,6 +31,8 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   // Function to send the updated status to the backend
   Future<void> updateComplaintStatus(String status) async {
     try {
+      await dotenv.load(fileName: "assets/.env");
+      final baseUrl = dotenv.env['API_BASE_URL'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
     
@@ -43,7 +46,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       print('Access token: $accessToken');
 
       final response = await http.post(
-        Uri.parse('http://192.168.34.182:7000/api/v1/updatecomplaintstatus'),
+        Uri.parse('$baseUrl/updatecomplaintstatus'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken',

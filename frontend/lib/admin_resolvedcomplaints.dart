@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ResolvedComplaintsPage extends StatefulWidget {
   @override
@@ -14,12 +15,14 @@ class _ResolvedComplaintsPageState extends State<ResolvedComplaintsPage> {
 
   // Fetch resolved complaints data from the backend
   Future<void> _fetchResolvedComplaints() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/getcomplaintsoverview'),
+        Uri.parse('$baseUrl/getcomplaintsoverview'),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',

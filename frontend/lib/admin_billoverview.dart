@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';  // Import the intl package
 import 'admin_viewpendingbills.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AdminBillOverviewPage extends StatefulWidget {
   @override
@@ -16,11 +17,13 @@ class _AdminOverviewPageState extends State<AdminBillOverviewPage> {
 
   // Fetch admin overview data from the backend
   Future<void> _fetchAdminOverview() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/getmessbillsummary'),
+        Uri.parse('$baseUrl/getmessbillsummary'),
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',
@@ -58,11 +61,13 @@ class _AdminOverviewPageState extends State<AdminBillOverviewPage> {
     }
   }
   Future<bool> refreshAccessToken() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? refreshToken = prefs.getString('refreshToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
+      Uri.parse('$baseUrl/refreshtoken'),
       headers: {
         'Authorization': 'Bearer $refreshToken',
       },

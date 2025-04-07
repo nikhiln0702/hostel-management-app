@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ComplaintsOverviewPage extends StatefulWidget {
   @override
@@ -17,12 +18,14 @@ class _ComplaintsOverviewPageState extends State<ComplaintsOverviewPage> {
 
   // Fetch active and resolved complaints count from the backend
   Future<void> _fetchComplaintsOverview() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/getcomplaintsoverview'),
+        Uri.parse('$baseUrl/getcomplaintsoverview'),
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',
@@ -64,11 +67,13 @@ class _ComplaintsOverviewPageState extends State<ComplaintsOverviewPage> {
   }
 
   Future<bool> refreshAccessToken() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? refreshToken = prefs.getString('refreshToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
+      Uri.parse('$baseUrl/refreshtoken'),
       headers: {
         'Authorization': 'Bearer $refreshToken',
       },

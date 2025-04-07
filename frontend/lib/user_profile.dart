@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'frontpage.dart';
 import 'package:http/http.dart' as http;
 import 'view_details.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class UserProfilePage extends StatefulWidget {
   @override
@@ -10,6 +12,7 @@ class UserProfilePage extends StatefulWidget {
 }
 
 void main() {
+  
   runApp(MaterialApp(
     routes: {
       '/': (context) => FrontPage(),  // Define the frontPage route here
@@ -37,10 +40,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   // Function to handle logout
   Future<void> _logout() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/logout'),
+      Uri.parse('$baseUrl/logout'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',

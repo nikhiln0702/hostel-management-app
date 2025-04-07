@@ -3,6 +3,7 @@ import 'package:intl/intl.dart'; // Import the intl package for date formatting
 import 'package:http/http.dart' as http; // Import the http package
 import 'dart:convert'; // For encoding the data
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() {
   runApp(MyApp());
@@ -34,6 +35,8 @@ class _LeaveRegisterState extends State<LeaveRegister> {
   List<String> remarksOptions = ['Entry', 'Exit']; // Options for remarks
 
   Future<void> submitLeaveRequest(String date, String remarks) async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
 
@@ -44,7 +47,7 @@ class _LeaveRegisterState extends State<LeaveRegister> {
     // Replace with your backend URL
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.34.182:7000/api/v1/leaveregister'),
+        Uri.parse('$baseUrl/leaveregister'),
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',
@@ -96,11 +99,13 @@ class _LeaveRegisterState extends State<LeaveRegister> {
     }
   }
   Future<bool> refreshAccessToken() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? refreshToken = prefs.getString('refreshToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
+      Uri.parse('$baseUrl/refreshtoken'),
       headers: {
         'Authorization': 'Bearer $refreshToken',
       },

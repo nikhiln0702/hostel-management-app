@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class TransactionPage extends StatefulWidget {
   const TransactionPage({super.key});
@@ -18,6 +20,8 @@ class _TransactionPageState extends State<TransactionPage> {
 
   // Function to fetch transactions from the API
   Future<void> _fetchTransactions() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
     
@@ -28,7 +32,7 @@ class _TransactionPageState extends State<TransactionPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/gettransactionhistory'),
+        Uri.parse('$baseUrl/gettransactionhistory'),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
@@ -89,11 +93,13 @@ class _TransactionPageState extends State<TransactionPage> {
   }
 
    Future<bool> refreshAccessToken() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? refreshToken = prefs.getString('refreshToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
+      Uri.parse('$baseUrl/refreshtoken'),
       headers: {
         'Authorization': 'Bearer $refreshToken',
       },

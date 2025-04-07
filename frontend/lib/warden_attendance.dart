@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart'; // Import this for date formatting
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AttendanceScreen extends StatefulWidget {
   @override
@@ -38,6 +39,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Future<void> _fetchStudents() async {
     try {
+      await dotenv.load(fileName: "assets/.env");
+      final baseUrl = dotenv.env['API_BASE_URL'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
 
@@ -47,7 +50,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/viewstudents'),
+        Uri.parse('$baseUrl/viewstudents'),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
@@ -76,6 +79,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> _fetchPresentCount() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
     setState(() {
@@ -84,7 +89,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/getpresentcount'),
+        Uri.parse('$baseUrl/getpresentcount'),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
@@ -148,6 +153,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Future<void> _saveAttendance() async {
     try {
+      await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
 
@@ -157,7 +164,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
 
       final response = await http.post(
-        Uri.parse('http://192.168.34.182:7000/api/v1/attendancesave'),
+        Uri.parse('$baseUrl/attendancesave'),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
@@ -185,6 +192,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Future<void> _fetchAppliedStudents() async {
     try {
+      print("hi");
+      await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
 
@@ -194,12 +204,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       }
 
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/gettodaysapplied'),
+        Uri.parse('$baseUrl/gettodaysapplied'),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
         },
       );
+      print(response.body);
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
         final List<dynamic> studentsData = responseBody['data'];

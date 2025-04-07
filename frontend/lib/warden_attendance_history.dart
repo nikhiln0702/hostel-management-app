@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
   const AttendanceHistoryScreen({super.key});
@@ -27,6 +28,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
 
   // Function to fetch attendance history
   Future<void> fetchAttendanceHistory() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
   // Get the stored access token from SharedPreferences
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? accessToken = prefs.getString('accessToken');
@@ -57,7 +60,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
 
   // Send the request to the backend
   final response = await http.post(
-    Uri.parse('http://192.168.34.182:7000/api/v1/attendancefetch'), // Replace with your backend URL
+    Uri.parse('$baseUrl/attendancefetch'), // Replace with your backend URL
     headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $accessToken'},
     body: jsonEncode({'date': dateString}),
   );

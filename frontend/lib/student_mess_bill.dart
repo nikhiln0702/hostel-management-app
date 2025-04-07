@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'student_dashboard.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MessBillPage extends StatefulWidget {
   const MessBillPage({super.key});
@@ -48,6 +49,8 @@ class _MessBillPageState extends State<MessBillPage> {
   }
 
   Future<void> fetchMessBills() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     setState(() {
       isLoading = true;
       isError = false;
@@ -66,7 +69,7 @@ class _MessBillPageState extends State<MessBillPage> {
 
       final response = await http.get(
         Uri.parse(
-          'http://192.168.34.182:7000/api/v1/viewmessbill',
+          '$baseUrl/viewmessbill',
         ), // Replace with your API URL
         headers: {
           'Authorization': 'Bearer $accessToken',
@@ -115,11 +118,13 @@ class _MessBillPageState extends State<MessBillPage> {
     }
   }
   Future<bool> refreshAccessToken() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? refreshToken = prefs.getString('refreshToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/refreshtoken'),
+      Uri.parse('$baseUrl/refreshtoken'),
       headers: {
         'Authorization': 'Bearer $refreshToken',
       },
@@ -193,6 +198,8 @@ class _MessBillPageState extends State<MessBillPage> {
   }
 
   Future<void> createRazorpayOrder() async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     if (totalAmount == null || totalAmount == 0) return;
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -201,7 +208,7 @@ class _MessBillPageState extends State<MessBillPage> {
     print("Response Status: $billId");
 
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/createOrder'),
+      Uri.parse('$baseUrl/createOrder'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
@@ -252,11 +259,13 @@ class _MessBillPageState extends State<MessBillPage> {
     String orderId,
     String signature,
   ) async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
     String? billId = prefs.getString('billId');
     final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/verifyPayment'),
+      Uri.parse('$baseUrl/verifyPayment'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',

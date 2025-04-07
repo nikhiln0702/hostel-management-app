@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AdminLogin extends StatefulWidget {
   const AdminLogin({super.key});
@@ -17,7 +18,9 @@ class _AdminLoginState extends State<AdminLogin> {
 
   // Function to send login request to Node.js backend
   Future<void> login(String email, String password) async {
-    final url = Uri.parse('http://192.168.34.182:7000/api/v1/loginadmin'); // Change this as per your backend URL
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
+    final url = Uri.parse('$baseUrl/loginadmin'); // Change this as per your backend URL
     
     try {
       if (email.isEmpty || password.isEmpty) {

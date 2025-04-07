@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,15 +15,25 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool rememberMe = false;
+  bool isLoading = false;  // New variable to track loading state
+
 
   // Function to send login request to Node.js backend
   Future<void> login(String email, String password) async {
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     // Update the URL to the correct IP or localhost for emulator
-    final url = Uri.parse('http://192.168.34.182:7000/api/v1/loginstudent');  // For Android emulator
+    final url = Uri.parse('$baseUrl/loginstudent');  // For Android emulator
     // If using a physical device, replace '10.0.2.2' with your PC's IP address
 
     try {
       if (email.isEmpty || password.isEmpty) {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Email and password are required.");
         return;
       }
@@ -39,7 +50,9 @@ class _LoginScreenState extends State<LoginScreen> {
           'rememberMe': rememberMe,
         }),
       );
-
+      setState(() {
+        isLoading = false;  // Stop loading after receiving the response
+      });
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
         String accessToken = responseBody['data']['accessToken'];
@@ -59,6 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
         showErrorDialog(context, errorMessage);
       }
     } catch (error) {
+      setState(() {
+        isLoading = false;  // Stop loading on error
+      });
       print('Error occurred: $error');  // More specific error logging
       showErrorDialog(context, "An error occurred. Please try again.");
     }
@@ -148,6 +164,23 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+          // Loading Indicator Positioned at the Top Center
+          if (isLoading)
+            Positioned(
+              top: MediaQuery.of(context).size.height / 2 - 20, // Center vertically
+              left: MediaQuery.of(context).size.width / 2 - 100, // Center horizontally
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 10), // Space between the indicator and the text
+                  Text(
+                    "Signing in...",
+                    style: TextStyle(fontSize: 16, color: Colors.blue),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

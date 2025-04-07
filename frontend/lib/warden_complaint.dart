@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'warden_complaint_detail.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ComplaintsScreen extends StatefulWidget {
   @override
@@ -18,6 +19,8 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
   // Function to fetch complaints from the backend
   Future<void> fetchComplaints() async {
     try {
+      await dotenv.load(fileName: "assets/.env");
+      final baseUrl = dotenv.env['API_BASE_URL'];
       // Get the stored access token from SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
@@ -29,7 +32,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
 
       // Make the API request with the Bearer token in the header
       final response = await http.get(
-        Uri.parse('http://192.168.34.182:7000/api/v1/viewcomplaints'),
+        Uri.parse('$baseUrl/viewcomplaints'),
         headers: {
           'Authorization': 'Bearer $accessToken', // Include Bearer token in header
           'Content-Type': 'application/json',

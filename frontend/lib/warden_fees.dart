@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WardenFeesScreen extends StatefulWidget {
   @override
@@ -77,7 +78,8 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
       'est': est ?? 0.0,
       'month_number': months.indexOf(selectedMonth!) + 1,  // Month number (1 for January, 2 for February, etc.)
     };
-
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
 
@@ -91,7 +93,7 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
 
     // Send data to backend API
    try{ final response = await http.post(
-      Uri.parse('http://192.168.34.182:7000/api/v1/publishmessbill'),  // Replace with your API endpoint
+      Uri.parse('$baseUrl/publishmessbill'),  // Replace with your API endpoint
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',

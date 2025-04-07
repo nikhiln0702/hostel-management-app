@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MessBillPage extends StatefulWidget {
   const MessBillPage({super.key});
@@ -30,9 +31,11 @@ class _MessBillPageState extends State<MessBillPage> {
 
   // Function to fetch bills from the backend
   Future<void> fetchBills(String year, String month) async {
+    await dotenv.load(fileName: "assets/.env");
+    final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
-    final url = Uri.parse('http://192.168.34.182:7000/api/v1/viewbills'); // Replace with your backend API URL
+    final url = Uri.parse('$baseUrl/viewbills'); // Replace with your backend API URL
 
     try {
       final response = await http.post(
