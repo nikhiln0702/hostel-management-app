@@ -6,6 +6,7 @@ import { MessBill } from './models/messbill.models.js';
 import { User } from './models/user.models.js';
 import { Transaction } from './models/transaction.models.js';
 import { Attendance } from './models/attendance.models.js';
+import { Notifications } from './models/notifications.models.js';
 dotenv.config({
     path: './env', // Ensure .env file is correctly configured
 });

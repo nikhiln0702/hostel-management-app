@@ -16,6 +16,7 @@ import { razorpay } from "../utils/razorpay.js";
 import PDFDocument from "pdfkit";
 import { Op, where } from "sequelize";
 import { Attendance } from "../models/attendance.models.js";
+import { Notifications } from "../models/notifications.models.js";
 
 
 //testing 
@@ -600,6 +601,12 @@ export const publishMessBill=asyncHandler(async(req,res,next)=>{
             month_number
         });
         messBills.push(messBill)
+        const notifications = students.map(student => ({
+            student_id: student.id,
+            message: 'New mess bill has been published. Please check the Mess Bill section.',
+        }));
+        await Notification.bulkCreate(notifications);
+
 
     }
     res.status(201).json(new ApiResponse(201, "Mess Bills Generated"))
@@ -871,6 +878,60 @@ export const runDailyAbsenceLogic=asyncHandler(async(req,res)=>{
     await user.save();
   }
 
-  console.log("✅ Absence check logic ran");
-  return res.status(200).json(new ApiResponse(200, "Absence count run"))
+})
+
+export const resetdays=asyncHandler(async(req,res)=>{
+    const users=await User.findAll();
+
+    for (const user of users){
+        user.totalAbsentDays=0;
+        user.totalPresentDays=30;
+        await user.save();
+    }
+    return res.status(200).json(new ApiResponse(200,"Days Reset"))
+})
+
+export const viewRegister=asyncHandler(async(req,res)=>{
+    const {date}=req.body
+
+    const records=await LeaveRegister.findAll({where:{date:date}})
+
+    if(!records){
+        return res.status(404).json(new ApiResponse(404,"No records Found"))
+    }
+
+    return res.status(200).json(new ApiResponse(200,"Records Fetched",records))
+})
+
+export const viewMyRegister=asyncHandler(async(req,res)=>{
+    const {date}=req.body
+    const id=req.user
+
+    const records=await LeaveRegister.findAll({where:{date:date,student_id:id}})
+
+    if(!records){
+        return res.status(404).json(new ApiResponse(404,"No records Found"))
+    }
+
+    return res.status(200).json(new ApiResponse(200,"Records Fetched",records))
+})
+
+export const notifications=asyncHandler(async(req,res)=>{
+    const id=req.user
+    const notifications=await Notifications.findAll({where:{student_id:id},order: [['created_at', 'DESC']]})
+    return res.status(200).json(new ApiResponse(200,"Notifications Fetched"))
+})
+
+export const notificationsread=asyncHandler(async(req,res)=>{
+    const studentId=req.user
+    try {
+        await Notification.update(
+          { is_read: true },
+          { where: { student_id: studentId, is_read: false } }
+        );
+        res.json({ message: 'Notifications marked as read.' });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to mark notifications as read.' });
+      }
 })
