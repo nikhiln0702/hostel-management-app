@@ -878,6 +878,7 @@ export const runDailyAbsenceLogic=asyncHandler(async(req,res)=>{
     await user.save();
   }
 
+  res.status(200).json({ message: "Cron job executed successfully" });
 })
 
 export const resetdays=asyncHandler(async(req,res)=>{
