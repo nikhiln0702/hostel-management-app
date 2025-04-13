@@ -849,6 +849,19 @@ export const attendanceSave=asyncHandler(async(req,res)=>{
           status: record.status, // "Present" or "Absent"
         });
       }
+      const absentUsers = await User.findAll({ where: { status: "Absent" } });
+
+  for (const user of absentUsers) {
+    user.totalAbsentDays += 1;
+
+    if (user.totalAbsentDays === 5) {
+      user.totalPresentDays = Math.max(0, user.totalPresentDays - 5);
+    } else if (user.totalAbsentDays > 5) {
+      user.totalPresentDays = Math.max(0, user.totalPresentDays - 1);
+    }
+
+    await user.save();
+  }
     return res.status(200).json(new ApiResponse(200,"Data Saved"))
 })
 export const attendanceFetch=asyncHandler(async(req,res)=>{
