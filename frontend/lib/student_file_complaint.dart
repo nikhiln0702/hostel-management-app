@@ -13,6 +13,7 @@ class FileComplaintPage extends StatefulWidget {
 class _FileComplaintPageState extends State<FileComplaintPage> {
   String selectedCategory = 'Maintenance'; // Default category
   TextEditingController complaintController = TextEditingController();
+  bool isLoading = false;
 
   // Handle back button press
   Future<bool> _onWillPop() async {
@@ -25,8 +26,13 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
     await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
     String complaintText = complaintController.text;
-
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
     if (complaintText.isEmpty) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Please enter your complaint!")),
       );
@@ -48,7 +54,9 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
           'description': complaintText,
         }),
       );
-
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       if (response.statusCode == 401) {
         // Token expired, attempt to refresh
         bool tokenRefreshed = await refreshAccessToken();
@@ -70,6 +78,9 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
         );
       }
     } catch (error) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("An error occurred! Please try again.")),
       );
@@ -241,6 +252,35 @@ class _FileComplaintPageState extends State<FileComplaintPage> {
                 ),
               ),
             ),
+            if (isLoading)
+  Center(
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 25, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white, // 👈 white background just for the loading box
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 6,
+            color: Colors.black26,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          CircularProgressIndicator(),
+          SizedBox(width: 10),
+          Text(
+            "Loading",
+            style: TextStyle(fontSize: 16, color: Colors.blue),
+          ),
+        ],
+      ),
+    ),
+  ),
+
           ],
         ),
       ),

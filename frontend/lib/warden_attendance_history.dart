@@ -18,6 +18,8 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
   String selectedDate = "";
   String selectedMonth = "";
   String selectedYear = "";
+  bool isLoading = false;
+
 
   // List of months and years
   List<String> months = List.generate(12, (index) => DateFormat.MMMM().format(DateTime(0, index + 1)));
@@ -28,6 +30,10 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
 
   // Function to fetch attendance history
   Future<void> fetchAttendanceHistory() async {
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
+
     await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
   // Get the stored access token from SharedPreferences
@@ -36,6 +42,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
 
   // Validate if all fields are selected
   if (selectedDate.isEmpty || selectedMonth.isEmpty || selectedYear.isEmpty) {
+    setState(() {
+          isLoading = false;  // Stop loading on error
+        });
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -68,6 +77,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
   print(response.body);
 
   if (response.statusCode == 200) {
+    setState(() {
+          isLoading = false;  // Stop loading on error
+        });
     var responseData = jsonDecode(response.body);
 
     // Assuming the attendance records are in responseData['data'] or the direct response body
@@ -107,6 +119,9 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
       });
     }
   } else {
+    setState(() {
+          isLoading = false;  // Stop loading on error
+        });
     // Handle error
     showDialog(
       context: context,
@@ -220,23 +235,53 @@ Widget build(BuildContext context) {
 
           // Display fetched data in a ListView of Cards
           Expanded(
-            child: ListView.builder(
-              itemCount: attendanceData.length,
-              itemBuilder: (context, index) {
-                var record = attendanceData[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 10),
-                  elevation: 5,
-                  child: ListTile(
-                    title: Text(record['username'] ?? 'Unknown'),
-                    subtitle: Text("Room: ${record['room']}\nStatus: ${record['status']}"),
-                    isThreeLine: true,
-                    tileColor: Colors.deepPurple[50],
-                  ),
-                );
-              },
+  child: isLoading
+      ? Center(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 6,
+                  color: Colors.black26,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                CircularProgressIndicator(),
+                SizedBox(width: 10),
+                Text(
+                  "Loading...",
+                  style: TextStyle(fontSize: 16, color: Colors.black),
+                ),
+              ],
             ),
           ),
+        )
+      : ListView.builder(
+          itemCount: attendanceData.length,
+          itemBuilder: (context, index) {
+            var record = attendanceData[index];
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 10),
+              elevation: 5,
+              child: ListTile(
+                title: Text(record['username'] ?? 'Unknown'),
+                subtitle: Text(
+                    "Room: ${record['room']}\nStatus: ${record['status']}"),
+                isThreeLine: true,
+                tileColor: Colors.deepPurple[50],
+              ),
+            );
+          },
+        ),
+),
+
         ],
       ),
     ),

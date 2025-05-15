@@ -454,7 +454,7 @@ export const updateStatus=asyncHandler(async(req,res)=>{
 })
 export const viewAbsentStudents=asyncHandler(async(req,res,next)=>{
     const user=await User.findByPk(req.user.id)
-    const students=await User.findAll({where:{block:user.managedBlock,role:"Student"},attributes:['username','email','status','room']})
+    const students=await User.findAll({where:{role:"Student"},attributes:['username','email','status','room']})
     return res.status(200)
     .json(new ApiResponse(200,"Students fetched",students))
 })
@@ -606,6 +606,9 @@ export const publishMessBill=asyncHandler(async(req,res,next)=>{
             message: 'New mess bill has been published. Please check the Mess Bill section.',
         }));
         await Notification.bulkCreate(notifications);
+        user.totalAbsentDays=0;
+        user.totalPresentDays=30;
+        await user.save();
 
 
     }

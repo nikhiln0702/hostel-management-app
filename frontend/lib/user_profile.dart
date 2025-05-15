@@ -23,6 +23,8 @@ void main() {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   String username = ""; // Store the user's name
+  bool isLoading = false;
+
 
   @override
   void initState() {
@@ -40,6 +42,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   // Function to handle logout
   Future<void> _logout() async {
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
     await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -54,7 +59,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
     if (response.statusCode == 200) {
       await prefs.remove('username');
       await prefs.remove('accessToken'); // Assuming you store the accessToken as well.
-      
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       Navigator.pushReplacementNamed(context, '/'); // Navigate back to the login page
     }
   }
@@ -99,7 +106,32 @@ class _UserProfilePageState extends State<UserProfilePage> {
         ),
         centerTitle: true,
       ),
-      body: Container(
+      body:isLoading
+    ? Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 6,
+                color: Colors.black26,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text("Loading...", style: TextStyle(fontSize: 16, color: Colors.black)),
+            ],
+          ),
+        ),
+      )
+      : Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.white, Colors.blue.shade200],

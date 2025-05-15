@@ -198,6 +198,9 @@ class _MessBillPageState extends State<MessBillPage> {
   }
 
   Future<void> createRazorpayOrder() async {
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
     await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
     if (totalAmount == null || totalAmount == 0) return;
@@ -231,10 +234,15 @@ class _MessBillPageState extends State<MessBillPage> {
           'prefill': {'contact': '9876543210', 'email': 'test@example.com'},
           'theme': {'color': '#F37254'},
         };
-
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         _razorpay.open(options);
       }
     } else {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       showErrorDialog(
         context,
         "Failed to create payment order. Please try again.",
@@ -377,7 +385,32 @@ class _MessBillPageState extends State<MessBillPage> {
           ],
         ),
       ),
-      body: Container(
+      body:isLoading
+    ? Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 6,
+                color: Colors.black26,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text("Loading...", style: TextStyle(fontSize: 16, color: Colors.black)),
+            ],
+          ),
+        ),
+      )
+      : Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.white, Colors.blue.shade300],
@@ -573,7 +606,7 @@ class _MessBillPageState extends State<MessBillPage> {
                 // Logic to show the fee receipt, either by opening a PDF or navigating to a new screen
                 // showFeeReceipt();
               },
-              child: const Text("View Fee Receipt", style: TextStyle(fontSize: 18)),
+              child: const Text("Paid", style: TextStyle(fontSize: 18)),
             ),
                       ],
 

@@ -160,22 +160,35 @@ class _WardenLoginState extends State<WardenLogin> {
               ),
             ),
           ),
-          if (isLoading)
-            Positioned(
-              top: MediaQuery.of(context).size.height / 2 - 20, // Center vertically
-              left: MediaQuery.of(context).size.width / 2 - 100, // Center horizontally
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(width: 10), // Space between the indicator and the text
-                  Text(
-                    "Signing in...",
-                    style: TextStyle(fontSize: 16, color: Colors.blue),
-                  ),
-                ],
-              ),
-            ),
+           if (isLoading)
+  Center(
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 25, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white, // 👈 white background just for the loading box
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 6,
+            color: Colors.black26,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          CircularProgressIndicator(),
+          SizedBox(width: 10),
+          Text(
+            "Loading",
+            style: TextStyle(fontSize: 16, color: Colors.blue),
+          ),
+        ],
+      ),
+    ),
+  ),
+
         ],
       ),
     );

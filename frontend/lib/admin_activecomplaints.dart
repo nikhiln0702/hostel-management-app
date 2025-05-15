@@ -15,6 +15,7 @@ class _ActiveComplaintsPageState extends State<ActiveComplaintsPage> {
 
   // Fetch active complaints data from the backend
   Future<void> _fetchActiveComplaints() async {
+    
     await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();

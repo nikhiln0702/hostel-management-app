@@ -19,6 +19,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String filter = 'All';
   int presentCount = 0;
   bool _isLoading = true;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -39,12 +40,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Future<void> _fetchStudents() async {
     try {
+      setState(() {
+      isLoading = true;  // Start loading indicator
+    });
       await dotenv.load(fileName: "assets/.env");
       final baseUrl = dotenv.env['API_BASE_URL'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
 
       if (accessToken == null) {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Access token is missing. Please log in again.");
         return;
       }
@@ -61,6 +68,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         final List<dynamic> studentsData = responseBody['data'];
 
         setState(() {
+          isLoading = false;  // Stop loading on error
           students = studentsData.map((student) {
             return {
               'name': student['username'] ?? 'Unknown',
@@ -71,9 +79,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           _filterStudents();
         });
       } else {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Failed to fetch students. Please try again.");
       }
     } catch (e) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       showErrorDialog(context, "An error occurred: $e");
     }
   }
@@ -111,54 +125,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  Future<void> _fetchAttendance() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? accessToken = prefs.getString('accessToken');
-
-      if (accessToken == null) {
-        showErrorDialog(context, "Access token is missing. Please log in again.");
-        return;
-      }
-
-      final response = await http.post(
-        Uri.parse('http://192.168.34.182:7000/api/v1/attendancefetch'),
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({'date': currentDate}),
-      );
-      if (response.statusCode == 200) {
-        final responseBody = json.decode(response.body);
-        final List<dynamic> studentsData = responseBody['data'];
-
-        setState(() {
-          students = studentsData.map((student) {
-            return {
-              'name': student['username'] ?? 'Unknown',
-              'roomNo': student['room'] ?? 'Unknown',
-              'status': student['status'],
-            };
-          }).toList();
-          _filterStudents();
-        });
-      } else {
-        showErrorDialog(context, "Failed to fetch students. Please try again.");
-      }
-    } catch (e) {
-      showErrorDialog(context, "An error occurred: $e");
-    }
-  }
+ 
 
   Future<void> _saveAttendance() async {
     try {
+      setState(() {
+      isLoading = true;  // Start loading indicator
+    });
       await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? accessToken = prefs.getString('accessToken');
 
       if (accessToken == null) {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Access token is missing. Please log in again.");
         return;
       }
@@ -174,6 +156,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         }),
       );
       if (response.statusCode == 200) {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         // Show success green bar (SnackBar) here
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -183,15 +168,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           ),
         );
       } else {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Save failed");
       }
     } catch (e) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       showErrorDialog(context, "An error occurred: $e");
     }
   }
 
   Future<void> _fetchAppliedStudents() async {
     try {
+      setState(() {
+      isLoading = true;  // Start loading indicator
+    });
       print("hi");
       await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
@@ -199,6 +193,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       String? accessToken = prefs.getString('accessToken');
 
       if (accessToken == null) {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Access token is missing. Please log in again.");
         return;
       }
@@ -213,6 +210,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
       print(response.body);
       if (response.statusCode == 200) {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         final responseBody = json.decode(response.body);
         final List<dynamic> studentsData = responseBody['data'];
 
@@ -228,9 +228,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           _filterStudents();
         });
       } else {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Failed to fetch students. Please try again.");
       }
     } catch (e) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       showErrorDialog(context, "An error occurred: $e");
     }
   }
@@ -274,7 +280,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         title: Text("Attendance", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.deepPurple,
       ),
-      body: Container(
+      body:isLoading
+    ? Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 6,
+                color: Colors.black26,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text("Loading...", style: TextStyle(fontSize: 16, color: Colors.black)),
+            ],
+          ),
+        ),
+      )
+      : Container(
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(

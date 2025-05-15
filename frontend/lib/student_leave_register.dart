@@ -33,14 +33,21 @@ class _LeaveRegisterState extends State<LeaveRegister> {
   TextEditingController dateController = TextEditingController(); // Controller for the Date field
   String? selectedRemark = 'Entry'; // Default selected remark
   List<String> remarksOptions = ['Entry', 'Exit']; // Options for remarks
+  bool isLoading = false;
 
   Future<void> submitLeaveRequest(String date, String remarks) async {
     await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
 
     if (accessToken == null) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       showErrorDialog(context, "Access token is missing. Please log in again.");
       return;
     }
@@ -69,10 +76,10 @@ class _LeaveRegisterState extends State<LeaveRegister> {
           return await submitLeaveRequest(date, remarks); // Retry the same complaint submission with new access token
         }
       }
-
       else if (response.statusCode == 200) {
         // Handle the success response
         setState(() {
+          isLoading = false;
           isApplied = true; // Show the "Applied" banner
         });
 
@@ -86,14 +93,23 @@ class _LeaveRegisterState extends State<LeaveRegister> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Leave application successful!")));
       } 
       else if(response.statusCode==404){
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error : No Exit Record Found")));
       }
       else {
         // Handle the error response
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         print('response :${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: ${response.body}")));
       }
     } catch (error) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       print('error :${error}');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to submit request: $error")));
     }
@@ -282,8 +298,39 @@ class _LeaveRegisterState extends State<LeaveRegister> {
               ),
             ],
           ),
+          if (isLoading)
+  Center(
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 25, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white, // 👈 white background just for the loading box
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 6,
+            color: Colors.black26,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          CircularProgressIndicator(),
+          SizedBox(width: 10),
+          Text(
+            "Loading",
+            style: TextStyle(fontSize: 16, color: Colors.blue),
+          ),
+        ],
+      ),
+    ),
+  ),
+
+
+        ],
+      ),
+      
     );
   }
 

@@ -14,6 +14,7 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
   final TextEditingController kswController = TextEditingController();
   final TextEditingController estController = TextEditingController();
   final TextEditingController elecController = TextEditingController();
+  bool isLoading = false;  // New variable to track loading state
 
   String? selectedMonth;
   String? selectedYear;
@@ -60,7 +61,13 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
   }
 
   Future<void> saveChanges() async {
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
     if (selectedMonth == null || selectedYear == null || mpd == null || ksw == null || elec == null) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Please fill all fields!"),
         backgroundColor: Colors.red,
@@ -100,7 +107,9 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
       },
       body: json.encode(requestBody),
     );
-
+    setState(() {
+          isLoading = false;  // Stop loading on error
+        });
     // Debugging: Print the response status code and body
     print('Response Status: ${response.statusCode}');
     print('Response Body: ${response.body}');
@@ -117,6 +126,9 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
       ));
     }}
     catch(e){
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       print(e);
     }
   }
@@ -149,8 +161,10 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
         title: Text("Update Monthly Fees"),
         backgroundColor: Colors.deepPurple,
       ),
-      body: SingleChildScrollView(
-        child:Container(
+      body: Stack(
+  children: [
+    SingleChildScrollView(
+      child: Container(
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -199,7 +213,37 @@ class _WardenFeesScreenState extends State<WardenFeesScreen> {
           ],
         ),
       ),
+    ),
+    
+    // 👇 Loading Indicator
+    if (isLoading)
+      Center(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 6,
+                color: Colors.black26,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text("Loading...", style: TextStyle(fontSize: 16, color: Colors.black)),
+            ],
+          ),
+        ),
       ),
+  ],
+),
+
     );
   }
 

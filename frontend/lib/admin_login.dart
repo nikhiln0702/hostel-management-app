@@ -15,15 +15,23 @@ class _AdminLoginState extends State<AdminLogin> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool rememberMe = false;
+  bool isLoading = false;  // New variable to track loading state
+
 
   // Function to send login request to Node.js backend
   Future<void> login(String email, String password) async {
+    setState(() {
+      isLoading = true;  // Start loading indicator
+    });
     await dotenv.load(fileName: "assets/.env");
     final baseUrl = dotenv.env['API_BASE_URL'];
     final url = Uri.parse('$baseUrl/loginadmin'); // Change this as per your backend URL
     
     try {
       if (email.isEmpty || password.isEmpty) {
+        setState(() {
+          isLoading = false;  // Stop loading on error
+        });
         showErrorDialog(context, "Email and password are required.");
         return;
       }
@@ -37,7 +45,9 @@ class _AdminLoginState extends State<AdminLogin> {
           'rememberMe': rememberMe,
         }),
       );
-      print(response.body);
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
         String accessToken = responseBody['data']['accessToken'];
@@ -59,6 +69,9 @@ class _AdminLoginState extends State<AdminLogin> {
         showErrorDialog(context, errorMessage);
       }
     } catch (error) {
+      setState(() {
+          isLoading = false;  // Stop loading on error
+        });
       print('$error');
       showErrorDialog(context, "An error occurred. Please try again.");
     }
@@ -150,6 +163,34 @@ class _AdminLoginState extends State<AdminLogin> {
               ),
             ),
           ),
+          if (isLoading)
+  Center(
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 25, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white, // 👈 white background just for the loading box
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 6,
+            color: Colors.black26,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          CircularProgressIndicator(),
+          SizedBox(width: 10),
+          Text(
+            "Loading",
+            style: TextStyle(fontSize: 16, color: Colors.blue),
+          ),
+        ],
+      ),
+    ),
+  ),
         ],
       ),
     );
