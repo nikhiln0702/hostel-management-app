@@ -601,11 +601,6 @@ export const publishMessBill=asyncHandler(async(req,res,next)=>{
             month_number
         });
         messBills.push(messBill)
-        const notifications = students.map(student => ({
-            student_id: student.id,
-            message: 'New mess bill has been published. Please check the Mess Bill section.',
-        }));
-        await Notification.bulkCreate(notifications);
         user.totalAbsentDays=0;
         user.totalPresentDays=30;
         await user.save();

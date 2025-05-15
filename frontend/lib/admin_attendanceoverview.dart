@@ -180,8 +180,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             SizedBox(height: 5),
             Text('Room No: ${student['roomNo']}', style: TextStyle(fontSize: 14)),
             SizedBox(height: 10),
-            _dropdownCell(student),
-            SizedBox(height: 10),
             _statusCell(student['status']),
           ],
         ),
